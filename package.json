@@ -1,0 +1,11 @@
+{
+  "name": "jiu-jitsu-http",
+  "version": "0.0.1",
+  "author": "Vitaly Anagorsky <vitaly@anagorsky.com>",
+  "dependencies": {
+    "jiu-jitsu-zip": "git+https://github.com/jiu-jitsu/jiu-jitsu-zip.git",
+    "jiu-jitsu-guid": "git+https://github.com/jiu-jitsu/jiu-jitsu-guid.git",
+    "jiu-jitsu-error": "git+https://github.com/jiu-jitsu/jiu-jitsu-error.git",
+    "jiu-jitsu-crypto": "git+https://github.com/jiu-jitsu/jiu-jitsu-crypto.git"
+  }
+}
