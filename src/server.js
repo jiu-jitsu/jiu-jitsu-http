@@ -3,6 +3,7 @@
  * Native
  */
 
+const fs = require('fs')
 const url = require('url')
 const zlib = require('zlib')
 const http2 = require('http2')
@@ -48,6 +49,8 @@ class Server extends events {
 		this.___apis = {}
 		this.___options = options
 		this.___default = {}
+		this.___default.key = fs.readFileSync(`${options.ssl}/server.key`)
+		this.___default.cert = fs.readFileSync(`${options.ssl}/server.cert`)
 		this.___default.paddingStrategy = PADDING_STRATEGY_MAX
 		this.___default.peerMaxConcurrentStreams = Math.pow(2, 16)
 		this.___listen()
@@ -64,7 +67,7 @@ class Server extends events {
 
 	___listen () {
 
-		this.server = http2.createServer(this.___default)
+		this.server = http2.createSecureServer(this.___default)
 		this.server.on('close', (error) => this.___onClose(error))
 		this.server.on('error', (error) => this.___onError(error))
 		this.server.on('listening', (error) => this.___onListening(error))
@@ -75,7 +78,7 @@ class Server extends events {
 
 	___onClose (error) {
 
-		process.nextTick(() => this.emit('close'))
+		process.nextTick(() => this.emit('close', error))
 
 	}
 
@@ -87,7 +90,7 @@ class Server extends events {
 
 	___onListening (error) {
 
-		process.nextTick(() => this.emit('ready'))
+		process.nextTick(() => this.emit('ready', error))
 
 	}
 

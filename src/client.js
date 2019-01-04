@@ -249,7 +249,8 @@ const client = (message, options, callback) => {
 
 	options.port = options.port || 80
 	options.host = options.host || '127.0.0.1'
-	options.protocol = options.ssl && 'https' || 'http'
+	options.requestCert = options.requestCert || true
+	options.rejectUnauthorized = options.rejectUnauthorized || false
 
 	/**
 	 * Headers
@@ -298,7 +299,7 @@ const client = (message, options, callback) => {
 	 * Session
 	 */
 
-	session = http2.connect(`${options.protocol}://${options.host}:${options.port}`)
+	session = http2.connect(`https://${options.host}:${options.port}`, options)
 	session.setTimeout(60 * 1000)
 
 	/**
