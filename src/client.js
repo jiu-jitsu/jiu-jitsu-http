@@ -20,12 +20,20 @@ const ___crypto = require('jiu-jitsu-crypto')
  * Constants
  */
 
+const HTTP2_SESSION_OPTIONS = {}
 const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
 const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
 const HTTP2_HEADER_METHOD = http2.constants.HTTP2_HEADER_METHOD
 const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
 const HTTP2_HEADER_ACCEPT_ENCODING = http2.constants.HTTP2_HEADER_ACCEPT_ENCODING
 const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCODING
+
+/**
+ * Default
+ */
+
+HTTP2_SESSION_OPTIONS.requestCert = true
+HTTP2_SESSION_OPTIONS.rejectUnauthorized = false
 
 /**
  * Noop
@@ -219,13 +227,6 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
 const client = (message, options, callback) => {
 
 	/**
-	 * Default
-	 */
-
-	message = Object.assign(message)
-	options = Object.assign(options)
-
-	/**
 	 * Session
 	 */
 
@@ -244,13 +245,18 @@ const client = (message, options, callback) => {
 	callback = callback || noop
 
 	/**
-	 * Default
+	 * Independent
+	 */
+
+	message = Object.assign({}, message)
+	options = Object.assign({}, options)
+
+	/**
+	 * Host + Port
 	 */
 
 	options.port = options.port || 80
 	options.host = options.host || '127.0.0.1'
-	options.requestCert = options.requestCert || true
-	options.rejectUnauthorized = options.rejectUnauthorized || false
 
 	/**
 	 * Headers
@@ -299,7 +305,7 @@ const client = (message, options, callback) => {
 	 * Session
 	 */
 
-	session = http2.connect(`https://${options.host}:${options.port}`, options)
+	session = http2.connect(`https://${options.host}:${options.port}`, HTTP2_SESSION_OPTIONS)
 	session.setTimeout(60 * 1000)
 
 	/**
