@@ -1,37 +1,44 @@
 
 /**
- * Native
+ *
  */
 
 const zlib = require('zlib')
+const http2 = require('http2')
 
 /**
- * Jiu-Jitsu
+ *
  */
 
+const ___cry = require('jiu-jitsu-cry')
 const ___zip = require('jiu-jitsu-zip')
-const ___crypto = require('jiu-jitsu-crypto')
 
 /**
- * router
+ *
  */
 
-const router = async (socket, request, response, options, apis) => {
+const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCODING
+
+/**
+ *
+ */
+
+const router = (socket, request, response, options, apis) => {
 
 	/**
-	 * Next
+	 *
 	 */
 
 	const next = apis[socket.message.api]
 
 	/**
-	 * Check
+	 *
 	 */
 
 	if (!next) {
 
 		/**
-		 * Return
+		 *
 		 */
 
 		return socket.destroy()
@@ -39,7 +46,7 @@ const router = async (socket, request, response, options, apis) => {
 	}
 
 	/**
-	 * Return
+	 *
 	 */
 
 	next(socket)
@@ -47,13 +54,13 @@ const router = async (socket, request, response, options, apis) => {
 }
 
 /**
- * removeRequestListeners
+ *
  */
 
 const removeRequestListeners = (socket, request, response, options, apis) => {
 
 	/**
-	 * Listen
+	 *
 	 */
 
 	request.removeListener('end', onRequestEnd)
@@ -63,71 +70,66 @@ const removeRequestListeners = (socket, request, response, options, apis) => {
 }
 
 /**
- * onRequestClose
+ *
  */
 
 const onRequestClose = (socket, request, response, options, apis) => removeRequestListeners(socket, request, response, options, apis)
 
 /**
- * onRequestData
+ *
  */
 
 const onRequestData = (socket, request, response, options, apis, buffers, buffer) => buffers.push(buffer)
 
 /**
- * onRequestEnd
+ *
  */
 
 const onRequestEnd = (socket, request, response, options, apis, buffers) => {
 
 	/**
-	 * Message
+	 *
 	 */
 
 	let message = Buffer.concat(buffers)
 
 	/**
-	 * Check
+	 *
 	 */
 
-	if (options.key) {
+	try {
 
-		try {
+		if (request.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf('gzip') > -1) {
 
-			message = message.toString()
-			message = ___crypto.decrypt(message, options)
-			message = ___zip.decrypt(message, options)
-			message = JSON.parse(message)
-
-		} catch (cause) {
-
-			return socket.destroy()
-
-		}
-
-	}
-
-	/**
-	 * Check
-	 */
-
-	if (!options.key) {
-
-		try {
+			/**
+			 *
+			 */
 
 			message = zlib.unzipSync(message)
-			message = JSON.parse(message)
-
-		} catch (cause) {
-
-			return socket.destroy()
 
 		}
+
+		/**
+		 *
+		 */
+
+		message = message.toString()
+		message = options.key && ___cry.decrypt(message, options) || message
+		message = options.key && ___zip.decrypt(message, options) || message
+		message = JSON.parse(message)
+
+	} catch (cause) {
+
+		/**
+		 *
+		 */
+
+		return socket.destroy()
 
 	}
 
 	/**
-	 * Message
+	 *
 	 */
 
 	socket.message = {}
@@ -137,13 +139,13 @@ const onRequestEnd = (socket, request, response, options, apis, buffers) => {
 	socket.message.data = message.data
 
 	/**
-	 * Remove
+	 *
 	 */
 
 	removeRequestListeners(socket, request, response, options, apis)
 
 	/**
-	 * Router
+	 *
 	 */
 
 	router(socket, request, response, options, apis)
@@ -151,19 +153,19 @@ const onRequestEnd = (socket, request, response, options, apis, buffers) => {
 }
 
 /**
- * Export
+ *
  */
 
 module.exports = (socket, request, response, options, apis) => {
 
 	/**
-	 * Buffers
+	 *
 	 */
 
 	const buffers = []
 
 	/**
-	 * Listen
+	 *
 	 */
 
 	request.on('close', (error) => onRequestClose(socket, request, response, options, apis, buffers))

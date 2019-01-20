@@ -1,6 +1,6 @@
 
 /**
- * Native
+ *
  */
 
 const fs = require('fs')
@@ -11,33 +11,36 @@ const events = require('events')
 const querystring = require('querystring')
 
 /**
- * Jiu-Jitsu
+ *
  */
 
+const ___cry = require('jiu-jitsu-cry')
 const ___zip = require('jiu-jitsu-zip')
 const ___guid = require('jiu-jitsu-guid')
-const ___crypto = require('jiu-jitsu-crypto')
 
 /**
- * Middlewares
+ *
  */
 
 const middlewares = require('./middlewares')
 
 /**
- * Constants
+ *
  */
 
 const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
+const HTTP2_METHOD_POST = http2.constants.HTTP2_METHOD_POST
 const HTTP2_HEADER_METHOD = http2.constants.HTTP2_HEADER_METHOD
 const HTTP2_HEADER_SCHEME = http2.constants.HTTP2_HEADER_SCHEME
 const HTTP2_HEADER_AUTHORITY = http2.constants.HTTP2_HEADER_AUTHORITY
 const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
 const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCODING
+const HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = http2.constants.HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN
+const HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS = http2.constants.HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS
 const PADDING_STRATEGY_MAX = http2.constants.PADDING_STRATEGY_MAX
 
 /**
- * Server
+ *
  */
 
 class Server extends events {
@@ -49,8 +52,8 @@ class Server extends events {
 		this.___apis = {}
 		this.___options = options
 		this.___default = {}
-		this.___default.key = fs.readFileSync(`${__dirname}/../ssl/server.key`).toString()
-		this.___default.cert = fs.readFileSync(`${__dirname}/../ssl/server.cert`).toString()
+		this.___default.key = fs.readFileSync(`${options.ssl}/server.key`).toString()
+		this.___default.cert = fs.readFileSync(`${options.ssl}/server.cert`).toString()
 		this.___default.paddingStrategy = PADDING_STRATEGY_MAX
 		this.___default.peerMaxConcurrentStreams = Math.pow(2, 16)
 		this.___listen()
@@ -60,6 +63,10 @@ class Server extends events {
 	message (api, next) {
 
 		this.___apis[api] = next
+
+		/**
+		 *
+		 */
 
 		return this
 
@@ -71,8 +78,18 @@ class Server extends events {
 		this.server.on('close', (error) => this.___onClose(error))
 		this.server.on('error', (error) => this.___onError(error))
 		this.server.on('listening', (error) => this.___onListening(error))
-		this.server.on('request', (request, response) => this.___onRequest(request, response))
+
+		/**
+		 *
+		 */
+
 		this.server.listen(this.___options.port, this.___options.host)
+
+		/**
+		 *
+		 */
+
+		this.server.on('request', (request, response) => this.___onRequest(request, response))
 
 	}
 
@@ -126,7 +143,7 @@ class Server extends events {
 		this.___url(request, response)
 
 		/**
-		 * Default
+		 *
 		 */
 
 		request.headers[HTTP2_HEADER_CONTENT_TYPE] = request.headers[HTTP2_HEADER_CONTENT_TYPE] || ''
@@ -137,40 +154,31 @@ class Server extends events {
 	___socketReturn (socket, request, response, message) {
 
 		/**
-		 * Check
+		 *
 		 */
 
 		if (response.finished) {
+
+			/**
+			 *
+			 */
 
 			return
 
 		}
 
 		/**
-		 * Check
+		 *
 		 */
 
-		if (this.___options.key) {
-
-			message = JSON.stringify(message)
-			message = ___zip.encrypt(message, this.___options)
-			message = ___crypto.encrypt(message, this.___options)
-
-		}
-
-		/**
-		 * Check
-		 */
-
-		if (!this.___options.key) {
-
-			message = JSON.stringify(message)
-			message = zlib.gzipSync(message)
-			response.setHeader(HTTP2_HEADER_CONTENT_ENCODING, 'gzip')
-
-		}
-
-		response.setHeader(HTTP2_HEADER_CONTENT_TYPE, 'application/message')
+		message = JSON.stringify(message)
+		message = this.___options.key && ___zip.encrypt(message, this.___options) || message
+		message = this.___options.key && ___cry.encrypt(message, this.___options) || message
+		message = zlib.gzipSync(message)
+		response.setHeader(HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, '*')
+		response.setHeader(HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS, 'Content-Type, Content-Encoding')
+		response.setHeader(HTTP2_HEADER_CONTENT_TYPE, 'multipart/form-data')
+		response.setHeader(HTTP2_HEADER_CONTENT_ENCODING, 'gzip')
 		response.writeHead(200)
 		response.write(message)
 		response.end(null)
@@ -187,33 +195,37 @@ class Server extends events {
 	___handler (request, response) {
 
 		/**
-		 * Socket
+		 *
 		 */
 
 		const socket = {}
 
 		/**
-		 * Extend
+		 *
 		 */
 
-		socket.id = ___guid(32)
+		socket.id = ___guid()
 		socket.ip = request.ip
 		socket.message = null
 		socket.return = (message) => this.___socketReturn(socket, request, response, message)
 		socket.destroy = (message) => this.___socketDestroy(socket, request, response, message)
 
 		/**
-		 * Post + Message
+		 *
 		 */
 
-		if (request.headers[HTTP2_HEADER_METHOD] === 'POST' && request.headers[HTTP2_HEADER_CONTENT_TYPE].indexOf('application/message') > -1) {
+		if (request.headers[HTTP2_HEADER_METHOD] === HTTP2_METHOD_POST && request.headers[HTTP2_HEADER_CONTENT_TYPE] === 'multipart/form-data') {
+
+			/**
+			 *
+			 */
 
 			return middlewares.message(socket, request, response, this.___options, this.___apis)
 
 		}
 
 		/**
-		 * Destroy in any other case
+		 *
 		 */
 
 		return socket.destroy()
@@ -223,7 +235,7 @@ class Server extends events {
 }
 
 /**
- * Export
+ *
  */
 
 module.exports = Server
