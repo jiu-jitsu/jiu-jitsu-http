@@ -121,6 +121,7 @@ class Server extends events {
 	___ip (request, response) {
 
 		request.ip =
+			request.headers['x-ip'] ||
 			request.headers['x-real-ip'] ||
 			request.headers['x-forwarded-for'] &&
 			request.headers['x-forwarded-for'].split(',').pop() ||
