@@ -5,7 +5,7 @@
   "dependencies": {
     "jiu-jitsu-cry": "git+https://github.com/jiu-jitsu/jiu-jitsu-cry.git",
     "jiu-jitsu-zip": "git+https://github.com/jiu-jitsu/jiu-jitsu-zip.git",
-    "jiu-jitsu-guid": "git+https://github.com/jiu-jitsu/jiu-jitsu-guid.git",
+    "jiu-jitsu-uuid": "git+https://github.com/jiu-jitsu/jiu-jitsu-uuid.git",
     "jiu-jitsu-error": "git+https://github.com/jiu-jitsu/jiu-jitsu-error.git"
   }
 }

@@ -16,7 +16,7 @@ const querystring = require('querystring')
 
 const ___cry = require('jiu-jitsu-cry')
 const ___zip = require('jiu-jitsu-zip')
-const ___guid = require('jiu-jitsu-guid')
+const ___uuid = require('jiu-jitsu-uuid')
 
 /**
  *
@@ -205,7 +205,7 @@ class Server extends events {
 		 *
 		 */
 
-		socket.id = ___guid()
+		socket.id = ___uuid()
 		socket.ip = request.ip
 		socket.message = null
 		socket.return = (message) => this.___socketReturn(socket, request, response, message)
