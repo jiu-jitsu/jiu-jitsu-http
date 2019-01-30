@@ -49,8 +49,4 @@ node_modules/
 ######################################
 package-lock.json
 
-# CONFIG FILE
-######################################
-config.json
-
 
