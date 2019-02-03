@@ -52,8 +52,8 @@ class Server extends events {
 		this.___apis = {}
 		this.___options = options
 		this.___default = {}
-		this.___default.key = fs.readFileSync(`${process.env.certificates}/server.key`).toString()
-		this.___default.cert = fs.readFileSync(`${process.env.certificates}/server.cert`).toString()
+		this.___default.key = fs.readFileSync(`${options.certificates}/server.key`).toString()
+		this.___default.cert = fs.readFileSync(`${options.certificates}/server.cert`).toString()
 		this.___default.paddingStrategy = PADDING_STRATEGY_MAX
 		this.___default.peerMaxConcurrentStreams = Math.pow(2, 16)
 		this.___listen()
