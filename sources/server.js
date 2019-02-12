@@ -16,6 +16,7 @@ const querystring = require('querystring')
 
 const ___cry = require('./cry')
 const ___zip = require('./zip')
+const ___uuid = require('./uuid')
 const ___error = require('./error')
 
 /**
