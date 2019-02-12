@@ -11,9 +11,9 @@ const http2 = require('http2')
  *
  */
 
-const ___cry = require('jiu-jitsu-cry')
-const ___zip = require('jiu-jitsu-zip')
-const ___error = require('jiu-jitsu-error')
+const ___cry = require('./cry')
+const ___zip = require('./zip')
+const ___error = require('./error')
 
 /**
  *

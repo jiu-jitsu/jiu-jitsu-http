@@ -14,15 +14,15 @@ const querystring = require('querystring')
  *
  */
 
-const ___cry = require('jiu-jitsu-cry')
-const ___zip = require('jiu-jitsu-zip')
-const ___uuid = require('jiu-jitsu-uuid')
+const ___cry = require('./cry')
+const ___zip = require('./zip')
+const ___error = require('./error')
 
 /**
  *
  */
 
-const middlewares = require('./middlewares')
+const middle = require('./middle')
 
 /**
  *
@@ -47,7 +47,15 @@ class Server extends events {
 
 	constructor (options) {
 
+		/**
+		 *
+		 */
+
 		super()
+
+		/**
+		 *
+		 */
 
 		this.___apis = {}
 		this.___options = options
@@ -62,6 +70,10 @@ class Server extends events {
 
 	message (api, next) {
 
+		/**
+		 *
+		 */
+
 		this.___apis[api] = next
 
 		/**
@@ -73,6 +85,10 @@ class Server extends events {
 	}
 
 	___listen () {
+
+		/**
+		 *
+		 */
 
 		this.server = http2.createSecureServer(this.___default)
 		this.server.on('close', (error) => this.___onClose(error))
@@ -95,11 +111,19 @@ class Server extends events {
 
 	___onClose (error) {
 
+		/**
+		 *
+		 */
+
 		process.nextTick(() => this.emit('close', error))
 
 	}
 
 	___onError (error) {
+
+		/**
+		 *
+		 */
 
 		process.nextTick(() => this.emit('error', error))
 
@@ -107,11 +131,19 @@ class Server extends events {
 
 	___onListening (error) {
 
+		/**
+		 *
+		 */
+
 		process.nextTick(() => this.emit('ready', error))
 
 	}
 
 	___onRequest (request, response) {
+
+		/**
+		 *
+		 */
 
 		this.___extend(request, response)
 		this.___handler(request, response)
@@ -119,6 +151,10 @@ class Server extends events {
 	}
 
 	___ip (request, response) {
+
+		/**
+		 *
+		 */
 
 		request.ip =
 			request.headers['x-ip'] ||
@@ -132,6 +168,10 @@ class Server extends events {
 
 	___url (request, response) {
 
+		/**
+		 *
+		 */
+
 		request.url = url.parse(`${request.headers[HTTP2_HEADER_SCHEME]}://${request.headers[HTTP2_HEADER_AUTHORITY]}${request.headers[HTTP2_HEADER_PATH]}`)
 		request.url.query = querystring.parse(request.url.query)
 		request.url.protocol = request.url.protocol.split(':')[0]
@@ -139,6 +179,10 @@ class Server extends events {
 	}
 
 	___extend (request, response) {
+
+		/**
+		 *
+		 */
 
 		this.___ip(request, response)
 		this.___url(request, response)
@@ -188,6 +232,10 @@ class Server extends events {
 
 	___socketDestroy (socket, request, response, message) {
 
+		/**
+		 *
+		 */
+
 		request.destroy()
 		response.destroy()
 
@@ -221,7 +269,7 @@ class Server extends events {
 			 *
 			 */
 
-			return middlewares.message(socket, request, response, this.___options, this.___apis)
+			return middle.message(socket, request, response, this.___options, this.___apis)
 
 		}
 
