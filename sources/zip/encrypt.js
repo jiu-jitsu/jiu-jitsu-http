@@ -17,6 +17,10 @@ module.exports = (message, options) => {
 
 	if (message.constructor === Object) {
 
+		/**
+		 *
+		 */
+
 		message = JSON.stringify(message)
 
 	}
@@ -26,6 +30,10 @@ module.exports = (message, options) => {
 	 */
 
 	if (message.constructor === Array) {
+
+		/**
+		 *
+		 */
 
 		message = JSON.stringify(message)
 

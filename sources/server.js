@@ -46,6 +46,10 @@ const PADDING_STRATEGY_MAX = http2.constants.PADDING_STRATEGY_MAX
 
 class Server extends events {
 
+	/**
+	 *
+	 */
+
 	constructor (options) {
 
 		/**

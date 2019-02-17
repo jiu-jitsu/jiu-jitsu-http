@@ -17,6 +17,10 @@ module.exports = (message, options) => {
 
 	if (message.constructor === Object) {
 
+		/**
+		 *
+		 */
+
 		return message
 
 	}
@@ -26,6 +30,10 @@ module.exports = (message, options) => {
 	 */
 
 	if (message.constructor === Array) {
+
+		/**
+		 *
+		 */
 
 		return message
 
