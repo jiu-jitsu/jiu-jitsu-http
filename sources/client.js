@@ -226,7 +226,7 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
  *
  */
 
-const client = (message, options, callback) => {
+const client = (options, message, callback) => {
 
 	/**
 	 *
