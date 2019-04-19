@@ -268,6 +268,7 @@ const client = (options, message, callback) => {
 	options.headers[HTTP2_HEADER_PATH] = '/'
 	options.headers[HTTP2_HEADER_METHOD] = 'POST'
 	options.headers[HTTP2_HEADER_ACCEPT_ENCODING] = 'gzip'
+	options.headers[HTTP2_HEADER_CONTENT_ENCODING] = 'gzip'
 	options.headers[HTTP2_HEADER_CONTENT_TYPE] = 'multipart/form-data'
 
 	/**
@@ -287,7 +288,6 @@ const client = (options, message, callback) => {
 	message = options.key && ___zip.encrypt(message, options) || message
 	message = options.key && ___cry.encrypt(message, options) || message
 	message = zlib.gzipSync(message)
-	options.headers[HTTP2_HEADER_CONTENT_ENCODING] = 'gzip'
 
 	/**
 	 *
