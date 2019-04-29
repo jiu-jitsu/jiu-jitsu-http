@@ -64,5 +64,3 @@ module.exports = (message, options) => {
 	return `${cipher.update(message.substr(16), 'binary', 'utf8')}${cipher.final('utf8')}`
 
 }
-
-

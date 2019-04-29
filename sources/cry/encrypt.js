@@ -64,5 +64,3 @@ module.exports = (message, options) => {
 	return `${iv.toString('binary')}${cipher.update(message, 'utf8', 'binary')}${cipher.final('binary')}`
 
 }
-
-

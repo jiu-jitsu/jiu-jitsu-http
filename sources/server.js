@@ -201,7 +201,7 @@ class Server extends events {
 
 	}
 
-	___socketReturn (socket, request, response, message) {
+	___socketSend (socket, request, response, message) {
 
 		/**
 		 *
@@ -261,7 +261,7 @@ class Server extends events {
 		socket.id = ___uuid()
 		socket.ip = request.ip
 		socket.message = null
-		socket.return = (message) => this.___socketReturn(socket, request, response, message)
+		socket.send = (message) => this.___socketSend(socket, request, response, message)
 		socket.destroy = (message) => this.___socketDestroy(socket, request, response, message)
 
 		/**
@@ -293,5 +293,3 @@ class Server extends events {
  */
 
 module.exports = Server
-
-

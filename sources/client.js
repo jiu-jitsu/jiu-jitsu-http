@@ -326,5 +326,3 @@ const client = (options, message, callback) => {
  */
 
 module.exports = util.promisify(client)
-
-

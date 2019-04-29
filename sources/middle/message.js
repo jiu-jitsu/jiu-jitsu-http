@@ -177,5 +177,3 @@ module.exports = (socket, request, response, options, apis) => {
 	request.on('end', (error) => onRequestEnd(socket, request, response, options, apis, buffers))
 
 }
-
-

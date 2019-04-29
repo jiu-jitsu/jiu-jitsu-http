@@ -46,5 +46,3 @@ module.exports = (message, options) => {
 	return zlib.gzipSync(message).toString('binary')
 
 }
-
-
