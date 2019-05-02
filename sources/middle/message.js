@@ -36,13 +36,7 @@ const router = (socket, request, response, options, apis) => {
 	 */
 
 	if (!next) {
-
-		/**
-		 *
-		 */
-
 		return socket.destroy()
-
 	}
 
 	/**
@@ -99,14 +93,12 @@ const onRequestEnd = (socket, request, response, options, apis, buffers) => {
 
 	try {
 
+		/**
+		 *
+		 */
+
 		if (request.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf('gzip') > -1) {
-
-			/**
-			 *
-			 */
-
 			message = zlib.unzipSync(message)
-
 		}
 
 		/**
