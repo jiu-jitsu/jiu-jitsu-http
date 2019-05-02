@@ -208,13 +208,7 @@ class Server extends events {
 		 */
 
 		if (response.finished) {
-
-			/**
-			 *
-			 */
-
 			return
-
 		}
 
 		/**
@@ -269,13 +263,7 @@ class Server extends events {
 		 */
 
 		if (request.headers[HTTP2_HEADER_METHOD] === HTTP2_METHOD_POST && request.headers[HTTP2_HEADER_CONTENT_TYPE] === 'multipart/form-data') {
-
-			/**
-			 *
-			 */
-
 			return middle.message(socket, request, response, this.___options, this.___apis)
-
 		}
 
 		/**

@@ -182,13 +182,7 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
 		 */
 
 		if (response.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf('gzip') > -1) {
-
-			/**
-			 *
-			 */
-
 			response.message = zlib.unzipSync(response.message)
-
 		}
 
 		/**
