@@ -1,2 +1,6 @@
 
-exports.message = require('./message')
+/**
+ *
+ */
+
+exports.message = require(`./message`)

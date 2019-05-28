@@ -3,17 +3,17 @@
  *
  */
 
-const util = require('util')
-const zlib = require('zlib')
-const http2 = require('http2')
+const util = require(`util`)
+const zlib = require(`zlib`)
+const http2 = require(`http2`)
 
 /**
  *
  */
 
-const ___cry = require('./cry')
-const ___zip = require('./zip')
-const ___error = require('./error')
+const ___aes = require(`jiu-jitsu-aes`)
+const ___zip = require(`jiu-jitsu-zip`)
+const ___error = require(`jiu-jitsu-error`)
 
 /**
  *
@@ -44,25 +44,10 @@ const noop = () => null
  *
  */
 
-const onSessionError = (message, options, session, error, callback) => callback(___error('jiu-jitsu-http/FAILED', error))
-
-/**
- *
- */
-
-const onSessionTimeout = (message, options, session, error, callback) => callback(___error('jiu-jitsu-http/FAILED', error))
-
-/**
- *
- */
-
-const onRequestError = (message, options, session, request, error, callback) => callback(___error('jiu-jitsu-http/FAILED', error))
-
-/**
- *
- */
-
-const onRequestClose = (message, options, session, request, error, callback) => callback(___error('jiu-jitsu-http/FAILED', error))
+const onSessionError = (message, options, session, error, callback) => callback(___error(`jiu-jitsu-http/FAILED`, error))
+const onSessionTimeout = (message, options, session, error, callback) => callback(___error(`jiu-jitsu-http/FAILED`, error))
+const onRequestError = (message, options, session, request, error, callback) => callback(___error(`jiu-jitsu-http/FAILED`, error))
+const onRequestClose = (message, options, session, request, error, callback) => callback(___error(`jiu-jitsu-http/FAILED`, error))
 
 /**
  *
@@ -75,11 +60,6 @@ const onRequestResponse = (message, options, session, request, headers, callback
 	 */
 
 	const buffers = []
-
-	/**
-	 *
-	 */
-
 	const response = {}
 
 	/**
@@ -87,13 +67,8 @@ const onRequestResponse = (message, options, session, request, headers, callback
 	 */
 
 	response.headers = headers
-
-	/**
-	 *
-	 */
-
-	response.headers[HTTP2_HEADER_CONTENT_TYPE] = response.headers[HTTP2_HEADER_CONTENT_TYPE] || ''
-	response.headers[HTTP2_HEADER_CONTENT_ENCODING] = response.headers[HTTP2_HEADER_CONTENT_ENCODING] || ''
+	response.headers[HTTP2_HEADER_CONTENT_TYPE] = response.headers[HTTP2_HEADER_CONTENT_TYPE] || ``
+	response.headers[HTTP2_HEADER_CONTENT_ENCODING] = response.headers[HTTP2_HEADER_CONTENT_ENCODING] || ``
 
 	/**
 	 *
@@ -112,7 +87,7 @@ const onRequestResponse = (message, options, session, request, headers, callback
 		 *
 		 */
 
-		return callback(___error('jiu-jitsu-http/FAILED_STATUS', response.headers[HTTP2_HEADER_STATUS]))
+		return callback(___error(`jiu-jitsu-http/FAILED_STATUS`, response.headers[HTTP2_HEADER_STATUS]))
 
 	}
 
@@ -120,7 +95,7 @@ const onRequestResponse = (message, options, session, request, headers, callback
 	 *
 	 */
 
-	if (response.headers[HTTP2_HEADER_CONTENT_TYPE].indexOf('multipart/form-data') < 0) {
+	if (response.headers[HTTP2_HEADER_CONTENT_TYPE].indexOf(`multipart/form-data`) < 0) {
 
 		/**
 		 *
@@ -133,7 +108,7 @@ const onRequestResponse = (message, options, session, request, headers, callback
 		 *
 		 */
 
-		return callback(___error('jiu-jitsu-http/FAILED_CONTENT'))
+		return callback(___error(`jiu-jitsu-http/FAILED_CONTENT`))
 
 	}
 
@@ -141,8 +116,8 @@ const onRequestResponse = (message, options, session, request, headers, callback
 	 *
 	 */
 
-	request.on('end', (error) => onRequestEnd(message, options, session, request, response, buffers, error, callback))
-	request.on('data', (buffer) => onRequestData(message, options, session, request, response, buffers, buffer, callback))
+	request.on(`end`, (error) => onRequestEnd(message, options, session, request, response, buffers, error, callback))
+	request.on(`data`, (buffer) => onRequestData(message, options, session, request, response, buffers, buffer, callback))
 
 }
 
@@ -181,7 +156,7 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
 		 *
 		 */
 
-		if (response.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf('gzip') > -1) {
+		if (response.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf(`gzip`) > -1) {
 			response.message = zlib.unzipSync(response.message)
 		}
 
@@ -190,7 +165,7 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
 		 */
 
 		response.message = response.message.toString()
-		response.message = options.key && ___cry.decrypt(response.message, options) || response.message
+		response.message = options.key && ___aes.decrypt(response.message, options) || response.message
 		response.message = options.key && ___zip.decrypt(response.message, options) || response.message
 		response.message = JSON.parse(response.message)
 
@@ -204,7 +179,7 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
 		 *
 		 */
 
-		return callback(___error('jiu-jitsu-http/FAILED', cause))
+		return callback(___error(`jiu-jitsu-http/FAILED`, cause))
 
 	}
 
@@ -227,11 +202,6 @@ const client = (options, message, callback) => {
 	 */
 
 	let session = null
-
-	/**
-	 *
-	 */
-
 	let request = null
 
 	/**
@@ -252,18 +222,18 @@ const client = (options, message, callback) => {
 	 */
 
 	options.port = options.port || 80
-	options.host = options.host || '127.0.0.1'
+	options.host = options.host || `127.0.0.1`
 
 	/**
 	 *
 	 */
 
 	options.headers = {}
-	options.headers[HTTP2_HEADER_PATH] = '/'
-	options.headers[HTTP2_HEADER_METHOD] = 'POST'
-	options.headers[HTTP2_HEADER_ACCEPT_ENCODING] = 'gzip'
-	options.headers[HTTP2_HEADER_CONTENT_ENCODING] = 'gzip'
-	options.headers[HTTP2_HEADER_CONTENT_TYPE] = 'multipart/form-data'
+	options.headers[HTTP2_HEADER_PATH] = `/`
+	options.headers[HTTP2_HEADER_METHOD] = `POST`
+	options.headers[HTTP2_HEADER_ACCEPT_ENCODING] = `gzip`
+	options.headers[HTTP2_HEADER_CONTENT_ENCODING] = `gzip`
+	options.headers[HTTP2_HEADER_CONTENT_TYPE] = `multipart/form-data`
 
 	/**
 	 *
@@ -280,7 +250,7 @@ const client = (options, message, callback) => {
 
 	message = JSON.stringify(message)
 	message = options.key && ___zip.encrypt(message, options) || message
-	message = options.key && ___cry.encrypt(message, options) || message
+	message = options.key && ___aes.encrypt(message, options) || message
 	message = zlib.gzipSync(message)
 
 	/**
@@ -300,11 +270,11 @@ const client = (options, message, callback) => {
 	 *
 	 */
 
-	session.on('error', (error) => onSessionError(message, options, session, error, callback))
-	session.on('timeout', (error) => onSessionTimeout(message, options, session, error, callback))
-	request.on('error', (error) => onRequestError(message, options, session, request, error, callback))
-	request.on('close', (error) => onRequestClose(message, options, session, request, error, callback))
-	request.on('response', (headers) => onRequestResponse(message, options, session, request, headers, callback))
+	session.on(`error`, (error) => onSessionError(message, options, session, error, callback))
+	session.on(`timeout`, (error) => onSessionTimeout(message, options, session, error, callback))
+	request.on(`error`, (error) => onRequestError(message, options, session, request, error, callback))
+	request.on(`close`, (error) => onRequestClose(message, options, session, request, error, callback))
+	request.on(`response`, (headers) => onRequestResponse(message, options, session, request, headers, callback))
 
 	/**
 	 *

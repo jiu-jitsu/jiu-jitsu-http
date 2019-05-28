@@ -1,3 +1,7 @@
 
-exports.server = require('./server')
-exports.client = require('./client')
+/**
+ *
+ */
+
+exports.server = require(`./server`)
+exports.client = require(`./client`)

@@ -3,15 +3,15 @@
  *
  */
 
-const zlib = require('zlib')
-const http2 = require('http2')
+const zlib = require(`zlib`)
+const http2 = require(`http2`)
 
 /**
  *
  */
 
-const ___cry = require('../cry')
-const ___zip = require('../zip')
+const ___aes = require(`jiu-jitsu-aes`)
+const ___zip = require(`jiu-jitsu-zip`)
 
 /**
  *
@@ -57,9 +57,9 @@ const removeRequestListeners = (socket, request, response, options, apis) => {
 	 *
 	 */
 
-	request.removeListener('end', onRequestEnd)
-	request.removeListener('data', onRequestData)
-	request.removeListener('close', onRequestClose)
+	request.removeListener(`end`, onRequestEnd)
+	request.removeListener(`data`, onRequestData)
+	request.removeListener(`close`, onRequestClose)
 
 }
 
@@ -97,7 +97,7 @@ const onRequestEnd = (socket, request, response, options, apis, buffers) => {
 		 *
 		 */
 
-		if (request.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf('gzip') > -1) {
+		if (request.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf(`gzip`) > -1) {
 			message = zlib.unzipSync(message)
 		}
 
@@ -106,7 +106,7 @@ const onRequestEnd = (socket, request, response, options, apis, buffers) => {
 		 */
 
 		message = message.toString()
-		message = options.key && ___cry.decrypt(message, options) || message
+		message = options.key && ___aes.decrypt(message, options) || message
 		message = options.key && ___zip.decrypt(message, options) || message
 		message = JSON.parse(message)
 
@@ -164,8 +164,8 @@ module.exports = (socket, request, response, options, apis) => {
 	 *
 	 */
 
-	request.on('close', (error) => onRequestClose(socket, request, response, options, apis, buffers))
-	request.on('data', (buffer) => onRequestData(socket, request, response, options, apis, buffers, buffer))
-	request.on('end', (error) => onRequestEnd(socket, request, response, options, apis, buffers))
+	request.on(`close`, (error) => onRequestClose(socket, request, response, options, apis, buffers))
+	request.on(`data`, (buffer) => onRequestData(socket, request, response, options, apis, buffers, buffer))
+	request.on(`end`, (error) => onRequestEnd(socket, request, response, options, apis, buffers))
 
 }

@@ -3,27 +3,26 @@
  *
  */
 
-const fs = require('fs')
-const url = require('url')
-const zlib = require('zlib')
-const http2 = require('http2')
-const events = require('events')
-const querystring = require('querystring')
+const fs = require(`fs`)
+const url = require(`url`)
+const zlib = require(`zlib`)
+const http2 = require(`http2`)
+const events = require(`events`)
+const querystring = require(`querystring`)
 
 /**
  *
  */
 
-const ___cry = require('./cry')
-const ___zip = require('./zip')
-const ___uuid = require('./uuid')
-const ___error = require('./error')
+const ___aes = require(`jiu-jitsu-aes`)
+const ___zip = require(`jiu-jitsu-zip`)
+const ___uuid = require(`jiu-jitsu-uuid`)
 
 /**
  *
  */
 
-const middle = require('./middle')
+const middle = require(`./middle`)
 
 /**
  *
@@ -73,6 +72,10 @@ class Server extends events {
 
 	}
 
+	/**
+	 *
+	 */
+
 	message (api, next) {
 
 		/**
@@ -89,6 +92,10 @@ class Server extends events {
 
 	}
 
+	/**
+	 *
+	 */
+
 	___listen () {
 
 		/**
@@ -96,9 +103,9 @@ class Server extends events {
 		 */
 
 		this.server = http2.createSecureServer(this.___default)
-		this.server.on('close', (error) => this.___onClose(error))
-		this.server.on('error', (error) => this.___onError(error))
-		this.server.on('listening', (error) => this.___onListening(error))
+		this.server.on(`close`, (error) => this.___onClose(error))
+		this.server.on(`error`, (error) => this.___onError(error))
+		this.server.on(`listening`, (error) => this.___onListening(error))
 
 		/**
 		 *
@@ -110,9 +117,13 @@ class Server extends events {
 		 *
 		 */
 
-		this.server.on('request', (request, response) => this.___onRequest(request, response))
+		this.server.on(`request`, (request, response) => this.___onRequest(request, response))
 
 	}
+
+	/**
+	 *
+	 */
 
 	___onClose (error) {
 
@@ -120,9 +131,13 @@ class Server extends events {
 		 *
 		 */
 
-		process.nextTick(() => this.emit('close', error))
+		process.nextTick(() => this.emit(`close`, error))
 
 	}
+
+	/**
+	 *
+	 */
 
 	___onError (error) {
 
@@ -130,9 +145,13 @@ class Server extends events {
 		 *
 		 */
 
-		process.nextTick(() => this.emit('error', error))
+		process.nextTick(() => this.emit(`error`, error))
 
 	}
+
+	/**
+	 *
+	 */
 
 	___onListening (error) {
 
@@ -140,9 +159,13 @@ class Server extends events {
 		 *
 		 */
 
-		process.nextTick(() => this.emit('ready', error))
+		process.nextTick(() => this.emit(`ready`, error))
 
 	}
+
+	/**
+	 *
+	 */
 
 	___onRequest (request, response) {
 
@@ -155,6 +178,10 @@ class Server extends events {
 
 	}
 
+	/**
+	 *
+	 */
+
 	___ip (request, response) {
 
 		/**
@@ -162,14 +189,18 @@ class Server extends events {
 		 */
 
 		request.ip =
-			request.headers['x-ip'] ||
-			request.headers['x-real-ip'] ||
-			request.headers['x-forwarded-for'] &&
-			request.headers['x-forwarded-for'].split(',').pop() ||
+			request.headers[`x-ip`] ||
+			request.headers[`x-real-ip`] ||
+			request.headers[`x-forwarded-for`] &&
+			request.headers[`x-forwarded-for`].split(`,`).pop() ||
 			request.socket.remoteAddress ||
 			request.connection.remoteAddress
 
 	}
+
+	/**
+	 *
+	 */
 
 	___url (request, response) {
 
@@ -179,9 +210,13 @@ class Server extends events {
 
 		request.url = url.parse(`${request.headers[HTTP2_HEADER_SCHEME]}://${request.headers[HTTP2_HEADER_AUTHORITY]}${request.headers[HTTP2_HEADER_PATH]}`)
 		request.url.query = querystring.parse(request.url.query)
-		request.url.protocol = request.url.protocol.split(':')[0]
+		request.url.protocol = request.url.protocol.split(`:`)[0]
 
 	}
+
+	/**
+	 *
+	 */
 
 	___extend (request, response) {
 
@@ -196,10 +231,14 @@ class Server extends events {
 		 *
 		 */
 
-		request.headers[HTTP2_HEADER_CONTENT_TYPE] = request.headers[HTTP2_HEADER_CONTENT_TYPE] || ''
-		request.headers[HTTP2_HEADER_CONTENT_ENCODING] = request.headers[HTTP2_HEADER_CONTENT_ENCODING] || ''
+		request.headers[HTTP2_HEADER_CONTENT_TYPE] = request.headers[HTTP2_HEADER_CONTENT_TYPE] || ``
+		request.headers[HTTP2_HEADER_CONTENT_ENCODING] = request.headers[HTTP2_HEADER_CONTENT_ENCODING] || ``
 
 	}
+
+	/**
+	 *
+	 */
 
 	___socketSend (socket, request, response, message) {
 
@@ -217,17 +256,21 @@ class Server extends events {
 
 		message = JSON.stringify(message)
 		message = this.___options.key && ___zip.encrypt(message, this.___options) || message
-		message = this.___options.key && ___cry.encrypt(message, this.___options) || message
+		message = this.___options.key && ___aes.encrypt(message, this.___options) || message
 		message = zlib.gzipSync(message)
-		response.setHeader(HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, '*')
-		response.setHeader(HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS, 'Content-Type, Content-Encoding')
-		response.setHeader(HTTP2_HEADER_CONTENT_TYPE, 'multipart/form-data')
-		response.setHeader(HTTP2_HEADER_CONTENT_ENCODING, 'gzip')
+		response.setHeader(HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, `*`)
+		response.setHeader(HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS, `Content-Type, Content-Encoding`)
+		response.setHeader(HTTP2_HEADER_CONTENT_TYPE, `multipart/form-data`)
+		response.setHeader(HTTP2_HEADER_CONTENT_ENCODING, `gzip`)
 		response.writeHead(200)
 		response.write(message)
 		response.end(null)
 
 	}
+
+	/**
+	 *
+	 */
 
 	___socketDestroy (socket, request, response, message) {
 
@@ -239,6 +282,10 @@ class Server extends events {
 		response.destroy()
 
 	}
+
+	/**
+	 *
+	 */
 
 	___handler (request, response) {
 
@@ -262,7 +309,7 @@ class Server extends events {
 		 *
 		 */
 
-		if (request.headers[HTTP2_HEADER_METHOD] === HTTP2_METHOD_POST && request.headers[HTTP2_HEADER_CONTENT_TYPE] === 'multipart/form-data') {
+		if (request.headers[HTTP2_HEADER_METHOD] === HTTP2_METHOD_POST && request.headers[HTTP2_HEADER_CONTENT_TYPE] === `multipart/form-data`) {
 			return middle.message(socket, request, response, this.___options, this.___apis)
 		}
 
