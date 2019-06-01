@@ -19,7 +19,17 @@ const ___error = require(`jiu-jitsu-error`)
  *
  */
 
-const HTTP2_SESSION_OPTIONS = {}
+const NOOP = () => null
+
+/**
+ *
+ */
+
+const HTTP2_OPTIONS = {}
+const HTTP2_SESSIONS = {}
+const HTTP2_SESSION_TIMEOUT = 0x7FFFFFFF
+const HTTP2_SESSION_MAX_REQUESTS = Math.pow(2, 8)
+const HTTP2_SESSION_MAX_LISTENERS = Math.pow(2, 8)
 const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
 const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
 const HTTP2_HEADER_METHOD = http2.constants.HTTP2_HEADER_METHOD
@@ -31,23 +41,96 @@ const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCOD
  *
  */
 
-HTTP2_SESSION_OPTIONS.requestCert = true
-HTTP2_SESSION_OPTIONS.rejectUnauthorized = false
+HTTP2_OPTIONS.requestCert = true
+HTTP2_OPTIONS.rejectUnauthorized = false
+HTTP2_OPTIONS.maxSessionMemory = Math.pow(2, 8)
+HTTP2_OPTIONS.peerMaxConcurrentStreams = Math.pow(2, 16)
 
 /**
  *
  */
 
-const noop = () => null
+const onSessionError = (message, options, session, error, callback) => {
+
+	/**
+	 *
+	 */
+
+	session.removeAllListeners(`error`)
+	session.removeAllListeners(`timeout`)
+
+	/**
+	 *
+	 */
+
+	callback(___error(`jiu-jitsu-http/FAILED`, error))
+
+}
 
 /**
  *
  */
 
-const onSessionError = (message, options, session, error, callback) => callback(___error(`jiu-jitsu-http/FAILED`, error))
-const onSessionTimeout = (message, options, session, error, callback) => callback(___error(`jiu-jitsu-http/FAILED`, error))
-const onRequestError = (message, options, session, request, error, callback) => callback(___error(`jiu-jitsu-http/FAILED`, error))
-const onRequestClose = (message, options, session, request, error, callback) => callback(___error(`jiu-jitsu-http/FAILED`, error))
+const onSessionTimeout = (message, options, session, error, callback) => {
+
+	/**
+	 *
+	 */
+
+	session.removeAllListeners(`error`)
+	session.removeAllListeners(`timeout`)
+
+	/**
+	 *
+	 */
+
+	callback(___error(`jiu-jitsu-http/FAILED`, error))
+
+}
+
+/**
+ *
+ */
+
+const onRequestError = (message, options, session, request, error, callback) => {
+
+	/**
+	 *
+	 */
+
+	if (session.count >= HTTP2_SESSION_MAX_REQUESTS) {
+		setTimeout(() => session.close())
+	}
+
+	/**
+	 *
+	 */
+
+	callback(___error(`jiu-jitsu-http/FAILED`, error))
+
+}
+
+/**
+ *
+ */
+
+const onRequestClose = (message, options, session, request, error, callback) => {
+
+	/**
+	 *
+	 */
+
+	if (session.count >= HTTP2_SESSION_MAX_REQUESTS) {
+		setTimeout(() => session.close())
+	}
+
+	/**
+	 *
+	 */
+
+	callback(___error(`jiu-jitsu-http/FAILED`, error))
+
+}
 
 /**
  *
@@ -75,20 +158,8 @@ const onRequestResponse = (message, options, session, request, headers, callback
 	 */
 
 	if (response.headers[HTTP2_HEADER_STATUS] > 200) {
-
-		/**
-		 *
-		 */
-
 		request.end()
-		session.close()
-
-		/**
-		 *
-		 */
-
 		return callback(___error(`jiu-jitsu-http/FAILED_STATUS`, response.headers[HTTP2_HEADER_STATUS]))
-
 	}
 
 	/**
@@ -96,20 +167,8 @@ const onRequestResponse = (message, options, session, request, headers, callback
 	 */
 
 	if (response.headers[HTTP2_HEADER_CONTENT_TYPE].indexOf(`multipart/form-data`) < 0) {
-
-		/**
-		 *
-		 */
-
 		request.end()
-		session.close()
-
-		/**
-		 *
-		 */
-
 		return callback(___error(`jiu-jitsu-http/FAILED_CONTENT`))
-
 	}
 
 	/**
@@ -138,7 +197,19 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
 	 */
 
 	request.end()
-	session.close()
+	request.removeAllListeners(`end`)
+	request.removeAllListeners(`data`)
+	request.removeAllListeners(`error`)
+	request.removeAllListeners(`close`)
+	request.removeAllListeners(`response`)
+
+	/**
+	 *
+	 */
+
+	if (session.count >= HTTP2_SESSION_MAX_REQUESTS) {
+		setTimeout(() => session.close())
+	}
 
 	/**
 	 *
@@ -201,14 +272,7 @@ const client = (options, message, callback) => {
 	 *
 	 */
 
-	let session = null
-	let request = null
-
-	/**
-	 *
-	 */
-
-	callback = callback || noop
+	callback = callback || NOOP
 
 	/**
 	 *
@@ -257,24 +321,55 @@ const client = (options, message, callback) => {
 	 *
 	 */
 
-	session = http2.connect(`https://${options.host}:${options.port}`, HTTP2_SESSION_OPTIONS)
-	session.setTimeout(60 * 1000)
+	const authority = `https://${options.host}:${options.port}`
 
 	/**
 	 *
 	 */
 
-	request = session.request(options.headers)
+	const session = HTTP2_SESSIONS[authority] || http2.connect(authority, HTTP2_OPTIONS)
 
 	/**
 	 *
 	 */
 
-	session.on(`error`, (error) => onSessionError(message, options, session, error, callback))
-	session.on(`timeout`, (error) => onSessionTimeout(message, options, session, error, callback))
-	request.on(`error`, (error) => onRequestError(message, options, session, request, error, callback))
-	request.on(`close`, (error) => onRequestClose(message, options, session, request, error, callback))
-	request.on(`response`, (headers) => onRequestResponse(message, options, session, request, headers, callback))
+	if (!HTTP2_SESSIONS[authority]) {
+		session.count = 0
+		session.setTimeout(HTTP2_SESSION_TIMEOUT)
+		session.setMaxListeners(HTTP2_SESSION_MAX_LISTENERS)
+		session.once(`error`, (error) => onSessionError(message, options, session, error, callback))
+		session.once(`timeout`, (error) => onSessionTimeout(message, options, session, error, callback))
+	}
+
+	/**
+	 *
+	 */
+
+	if (!HTTP2_SESSIONS[authority]) {
+		HTTP2_SESSIONS[authority] = session
+	}
+
+	/**
+	 *
+	 */
+
+	if (++session.count >= HTTP2_SESSION_MAX_REQUESTS) {
+		HTTP2_SESSIONS[authority] = undefined
+	}
+
+	/**
+	 *
+	 */
+
+	const request = session.request(options.headers)
+
+	/**
+	 *
+	 */
+
+	request.once(`error`, (error) => onRequestError(message, options, session, request, error, callback))
+	request.once(`close`, (error) => onRequestClose(message, options, session, request, error, callback))
+	request.once(`response`, (headers) => onRequestResponse(message, options, session, request, headers, callback))
 
 	/**
 	 *

@@ -22,7 +22,7 @@ const ___uuid = require(`jiu-jitsu-uuid`)
  *
  */
 
-const middle = require(`./middle`)
+const middleMessage = require(`./middle/message`)
 
 /**
  *
@@ -37,7 +37,13 @@ const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
 const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCODING
 const HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = http2.constants.HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN
 const HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS = http2.constants.HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS
-const PADDING_STRATEGY_MAX = http2.constants.PADDING_STRATEGY_MAX
+
+/**
+ *
+ */
+
+const DEFAULT_PADDING_STRATEGY_MAX = http2.constants.PADDING_STRATEGY_MAX
+const DEFAULT_PEER_MAX_CONCURRENT_STREAMS = Math.pow(2, 16)
 
 /**
  *
@@ -66,8 +72,8 @@ class Server extends events {
 		this.___default = {}
 		this.___default.key = fs.readFileSync(`${options.certificates}/server.key`).toString()
 		this.___default.cert = fs.readFileSync(`${options.certificates}/server.cert`).toString()
-		this.___default.paddingStrategy = PADDING_STRATEGY_MAX
-		this.___default.peerMaxConcurrentStreams = Math.pow(2, 16)
+		this.___default.paddingStrategy = DEFAULT_PADDING_STRATEGY_MAX
+		this.___default.peerMaxConcurrentStreams = DEFAULT_PEER_MAX_CONCURRENT_STREAMS
 		this.___listen()
 
 	}
@@ -105,6 +111,7 @@ class Server extends events {
 		this.server = http2.createSecureServer(this.___default)
 		this.server.on(`close`, (error) => this.___onClose(error))
 		this.server.on(`error`, (error) => this.___onError(error))
+		this.server.on(`session`, (error) => this.___onSession(error))
 		this.server.on(`listening`, (error) => this.___onListening(error))
 
 		/**
@@ -146,6 +153,20 @@ class Server extends events {
 		 */
 
 		process.nextTick(() => this.emit(`error`, error))
+
+	}
+
+	/**
+	 *
+	 */
+
+	___onSession (session) {
+
+		/**
+		 *
+		 */
+
+		process.nextTick(() => this.emit(`session`, session))
 
 	}
 
@@ -258,6 +279,11 @@ class Server extends events {
 		message = this.___options.key && ___zip.encrypt(message, this.___options) || message
 		message = this.___options.key && ___aes.encrypt(message, this.___options) || message
 		message = zlib.gzipSync(message)
+
+		/**
+		 *
+		 */
+
 		response.setHeader(HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, `*`)
 		response.setHeader(HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS, `Content-Type, Content-Encoding`)
 		response.setHeader(HTTP2_HEADER_CONTENT_TYPE, `multipart/form-data`)
@@ -310,7 +336,7 @@ class Server extends events {
 		 */
 
 		if (request.headers[HTTP2_HEADER_METHOD] === HTTP2_METHOD_POST && request.headers[HTTP2_HEADER_CONTENT_TYPE] === `multipart/form-data`) {
-			return middle.message(socket, request, response, this.___options, this.___apis)
+			return middleMessage(socket, request, response, this.___options, this.___apis)
 		}
 
 		/**

@@ -51,23 +51,7 @@ const router = (socket, request, response, options, apis) => {
  *
  */
 
-const removeRequestListeners = (socket, request, response, options, apis) => {
-
-	/**
-	 *
-	 */
-
-	request.removeListener(`end`, onRequestEnd)
-	request.removeListener(`data`, onRequestData)
-	request.removeListener(`close`, onRequestClose)
-
-}
-
-/**
- *
- */
-
-const onRequestClose = (socket, request, response, options, apis) => removeRequestListeners(socket, request, response, options, apis)
+const onRequestClose = (socket, request, response, options, apis) => null
 
 /**
  *
@@ -133,12 +117,6 @@ const onRequestEnd = (socket, request, response, options, apis, buffers) => {
 	socket.message.api = message.api
 	socket.message.auth = message.auth
 	socket.message.data = message.data
-
-	/**
-	 *
-	 */
-
-	removeRequestListeners(socket, request, response, options, apis)
 
 	/**
 	 *

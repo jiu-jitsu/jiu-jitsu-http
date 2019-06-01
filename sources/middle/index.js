@@ -1,6 +1,0 @@
-
-/**
- *
- */
-
-exports.message = require(`./message`)
