@@ -327,13 +327,7 @@ const client = (options, message, callback) => {
 	 *
 	 */
 
-	const existing = HTTP2_SESSIONS[authority]
-
-	/**
-	 *
-	 */
-
-	if (existing && (existing.closed || existing.destroyed)) {
+	if (HTTP2_SESSIONS[authority] && (HTTP2_SESSIONS[authority].closed || HTTP2_SESSIONS[authority].destroyed)) {
 		HTTP2_SESSIONS[authority] = undefined
 	}
 
