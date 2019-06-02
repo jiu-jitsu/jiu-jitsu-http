@@ -42,8 +42,9 @@ const HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS = http2.constants.HTTP2_HEADER_A
  *
  */
 
-const DEFAULT_PADDING_STRATEGY_MAX = http2.constants.PADDING_STRATEGY_MAX
-const DEFAULT_PEER_MAX_CONCURRENT_STREAMS = Math.pow(2, 16)
+const HTTP2_SESSION_TIMEOUT = 0x7FFFFFFF
+const HTTP2_PADDING_STRATEGY_MAX = http2.constants.PADDING_STRATEGY_MAX
+const HTTP2_PEER_MAX_CONCURRENT_STREAMS = Math.pow(2, 16)
 
 /**
  *
@@ -72,8 +73,8 @@ class Server extends events {
 		this.___default = {}
 		this.___default.key = fs.readFileSync(`${options.certificates}/server.key`).toString()
 		this.___default.cert = fs.readFileSync(`${options.certificates}/server.cert`).toString()
-		this.___default.paddingStrategy = DEFAULT_PADDING_STRATEGY_MAX
-		this.___default.peerMaxConcurrentStreams = DEFAULT_PEER_MAX_CONCURRENT_STREAMS
+		this.___default.paddingStrategy = HTTP2_PADDING_STRATEGY_MAX
+		this.___default.peerMaxConcurrentStreams = HTTP2_PEER_MAX_CONCURRENT_STREAMS
 		this.___listen()
 
 	}
@@ -161,6 +162,12 @@ class Server extends events {
 	 */
 
 	___onSession (session) {
+
+		/**
+		 *
+		 */
+
+		session.setTimeout(HTTP2_SESSION_TIMEOUT)
 
 		/**
 		 *

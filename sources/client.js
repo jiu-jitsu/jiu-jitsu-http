@@ -327,6 +327,20 @@ const client = (options, message, callback) => {
 	 *
 	 */
 
+	const existing = HTTP2_SESSIONS[authority]
+
+	/**
+	 *
+	 */
+
+	if (existing && (existing.closed || existing.destroyed)) {
+		HTTP2_SESSIONS[authority] = undefined
+	}
+
+	/**
+	 *
+	 */
+
 	const session = HTTP2_SESSIONS[authority] || http2.connect(authority, HTTP2_OPTIONS)
 
 	/**
