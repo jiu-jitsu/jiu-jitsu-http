@@ -19,7 +19,30 @@ const ___error = require(`jiu-jitsu-error`)
  *
  */
 
+const middlePost = require(`./middle/client/post`)
+
+/**
+ *
+ */
+
 const NOOP = () => null
+
+/**
+ *
+ */
+
+const HTTP2_SESSION_TIMEOUT = 0x7FFFFFFF
+const HTTP2_SESSION_MAX_REQUESTS = 64
+const HTTP2_SESSION_MAX_LISTENERS = 1024
+const HTTP2_METHOD_GET = http2.constants.HTTP2_METHOD_GET
+const HTTP2_METHOD_PUT = http2.constants.HTTP2_METHOD_PUT
+const HTTP2_METHOD_POST = http2.constants.HTTP2_METHOD_POST
+const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
+const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
+const HTTP2_HEADER_METHOD = http2.constants.HTTP2_HEADER_METHOD
+const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
+const HTTP2_HEADER_ACCEPT_ENCODING = http2.constants.HTTP2_HEADER_ACCEPT_ENCODING
+const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCODING
 
 /**
  *
@@ -27,15 +50,9 @@ const NOOP = () => null
 
 const HTTP2_OPTIONS = {}
 const HTTP2_SESSIONS = {}
-const HTTP2_SESSION_TIMEOUT = 0x7FFFFFFF
-const HTTP2_SESSION_MAX_REQUESTS = Math.pow(2, 8)
-const HTTP2_SESSION_MAX_LISTENERS = Math.pow(2, 8)
-const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
-const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
-const HTTP2_HEADER_METHOD = http2.constants.HTTP2_HEADER_METHOD
-const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
-const HTTP2_HEADER_ACCEPT_ENCODING = http2.constants.HTTP2_HEADER_ACCEPT_ENCODING
-const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCODING
+const HTTP2_METHOD_GET_HEADERS = {}
+const HTTP2_METHOD_PUT_HEADERS = {}
+const HTTP2_METHOD_POST_HEADERS = {}
 
 /**
  *
@@ -50,207 +67,181 @@ HTTP2_OPTIONS.peerMaxConcurrentStreams = Math.pow(2, 16)
  *
  */
 
-const onSessionError = (message, options, session, error, callback) => {
-
-	/**
-	 *
-	 */
-
-	session.removeAllListeners(`error`)
-	session.removeAllListeners(`timeout`)
-
-	/**
-	 *
-	 */
-
-	callback(___error(`jiu-jitsu-http/FAILED`, error))
-
-}
+HTTP2_METHOD_POST_HEADERS[HTTP2_HEADER_PATH] = `/`
+HTTP2_METHOD_POST_HEADERS[HTTP2_HEADER_METHOD] = `POST`
+HTTP2_METHOD_POST_HEADERS[HTTP2_HEADER_ACCEPT_ENCODING] = `gzip`
+HTTP2_METHOD_POST_HEADERS[HTTP2_HEADER_CONTENT_ENCODING] = `gzip`
+HTTP2_METHOD_POST_HEADERS[HTTP2_HEADER_CONTENT_TYPE] = `application/json`
 
 /**
  *
  */
 
-const onSessionTimeout = (message, options, session, error, callback) => {
+class Client {
 
 	/**
 	 *
 	 */
 
-	session.removeAllListeners(`error`)
-	session.removeAllListeners(`timeout`)
-
-	/**
-	 *
-	 */
-
-	callback(___error(`jiu-jitsu-http/FAILED`, error))
-
-}
-
-/**
- *
- */
-
-const onRequestError = (message, options, session, request, error, callback) => {
-
-	/**
-	 *
-	 */
-
-	if (session.count >= HTTP2_SESSION_MAX_REQUESTS) {
-		setTimeout(() => session.close())
-	}
-
-	/**
-	 *
-	 */
-
-	callback(___error(`jiu-jitsu-http/FAILED`, error))
-
-}
-
-/**
- *
- */
-
-const onRequestClose = (message, options, session, request, error, callback) => {
-
-	/**
-	 *
-	 */
-
-	if (session.count >= HTTP2_SESSION_MAX_REQUESTS) {
-		setTimeout(() => session.close())
-	}
-
-	/**
-	 *
-	 */
-
-	callback(___error(`jiu-jitsu-http/FAILED`, error))
-
-}
-
-/**
- *
- */
-
-const onRequestResponse = (message, options, session, request, headers, callback) => {
-
-	/**
-	 *
-	 */
-
-	const buffers = []
-	const response = {}
-
-	/**
-	 *
-	 */
-
-	response.headers = headers
-	response.headers[HTTP2_HEADER_CONTENT_TYPE] = response.headers[HTTP2_HEADER_CONTENT_TYPE] || ``
-	response.headers[HTTP2_HEADER_CONTENT_ENCODING] = response.headers[HTTP2_HEADER_CONTENT_ENCODING] || ``
-
-	/**
-	 *
-	 */
-
-	if (response.headers[HTTP2_HEADER_STATUS] > 200) {
-		request.end()
-		return callback(___error(`jiu-jitsu-http/FAILED_STATUS`, response.headers[HTTP2_HEADER_STATUS]))
-	}
-
-	/**
-	 *
-	 */
-
-	if (response.headers[HTTP2_HEADER_CONTENT_TYPE].indexOf(`multipart/form-data`) < 0) {
-		request.end()
-		return callback(___error(`jiu-jitsu-http/FAILED_CONTENT`))
-	}
-
-	/**
-	 *
-	 */
-
-	request.on(`end`, (error) => onRequestEnd(message, options, session, request, response, buffers, error, callback))
-	request.on(`data`, (buffer) => onRequestData(message, options, session, request, response, buffers, buffer, callback))
-
-}
-
-/**
- *
- */
-
-const onRequestData = (message, options, session, request, response, buffers, buffer, callback) => buffers.push(buffer)
-
-/**
- *
- */
-
-const onRequestEnd = (message, options, session, request, response, buffers, error, callback) => {
-
-	/**
-	 *
-	 */
-
-	request.end()
-	request.removeAllListeners(`end`)
-	request.removeAllListeners(`data`)
-	request.removeAllListeners(`error`)
-	request.removeAllListeners(`close`)
-	request.removeAllListeners(`response`)
-
-	/**
-	 *
-	 */
-
-	if (session.count >= HTTP2_SESSION_MAX_REQUESTS) {
-		setTimeout(() => session.close())
-	}
-
-	/**
-	 *
-	 */
-
-	response.message = Buffer.concat(buffers)
-
-	/**
-	 *
-	 */
-
-	try {
+	constructor (options) {
 
 		/**
 		 *
 		 */
 
-		if (response.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf(`gzip`) > -1) {
-			response.message = zlib.unzipSync(response.message)
+		this.get = util.promisify(this.get)
+		this.file = util.promisify(this.file)
+		this.message = util.promisify(this.message)
+
+		/**
+		 *
+		 */
+
+		this.options = options
+		this.authority = `https://${options.host}:${options.port}`
+
+	}
+
+	/**
+	 *
+	 */
+
+	get (url, callback = NOOP) {
+		callback(null)
+	}
+
+	/**
+	 *
+	 */
+
+	file (file, callback = NOOP) {
+		callback(null)
+	}
+
+	/**
+	 *
+	 */
+
+	message (message, callback = NOOP) {
+
+		/**
+		 *
+		 */
+
+		message.id = message.id || null
+		message.api = message.api || null
+		message.auth = message.auth || null
+		message.data = message.data || null
+
+		/**
+		 *
+		 */
+
+		message = JSON.stringify(message)
+		message = this.options.key && ___zip.encrypt(message, this.options) || message
+		message = this.options.key && ___aes.encrypt(message, this.options) || message
+		message = zlib.gzipSync(message)
+
+		/**
+		 *
+		 */
+
+		this.___send(HTTP2_METHOD_POST, HTTP2_METHOD_POST_HEADERS, message, callback)
+
+	}
+
+	/**
+	 *
+	 */
+
+	___send (method, headers, body, callback) {
+
+		/**
+		 *
+		 */
+
+		if (HTTP2_SESSIONS[this.authority] && HTTP2_SESSIONS[this.authority].closed) {
+			HTTP2_SESSIONS[this.authority] = undefined
 		}
 
 		/**
 		 *
 		 */
 
-		response.message = response.message.toString()
-		response.message = options.key && ___aes.decrypt(response.message, options) || response.message
-		response.message = options.key && ___zip.decrypt(response.message, options) || response.message
-		response.message = JSON.parse(response.message)
+		if (HTTP2_SESSIONS[this.authority] && HTTP2_SESSIONS[this.authority].destroyed) {
+			HTTP2_SESSIONS[this.authority] = undefined
+		}
 
 		/**
 		 *
 		 */
 
-	} catch (cause) {
+		const session = HTTP2_SESSIONS[this.authority] || http2.connect(this.authority, HTTP2_OPTIONS)
 
 		/**
 		 *
 		 */
 
-		return callback(___error(`jiu-jitsu-http/FAILED`, cause))
+		if (!HTTP2_SESSIONS[this.authority]) {
+			session.count = 0
+			session.setTimeout(HTTP2_SESSION_TIMEOUT)
+			session.setMaxListeners(HTTP2_SESSION_MAX_LISTENERS)
+			session.once(`error`, (error) => this.___onSessionError(session, error, callback))
+			session.once(`timeout`, (error) => this.___onSessionTimeout(session, error, callback))
+		}
+
+		/**
+		 *
+		 */
+
+		if (!HTTP2_SESSIONS[this.authority]) {
+			HTTP2_SESSIONS[this.authority] = session
+		}
+
+		/**
+		 *
+		 */
+
+		if (++session.count >= HTTP2_SESSION_MAX_REQUESTS) {
+			HTTP2_SESSIONS[this.authority] = undefined
+		}
+
+		/**
+		 *
+		 */
+
+		const request = session.request(headers)
+
+		/**
+		 *
+		 */
+
+		request.method = method
+		request.headers = headers
+
+		/**
+		 *
+		 */
+
+		request.once(`error`, (error) => this.___onRequestError(session, request, error, callback))
+		request.once(`close`, (error) => this.___onRequestClose(session, request, error, callback))
+		request.once(`response`, (headers) => this.___onResponseResponse(session, request, headers, callback))
+
+		/**
+		 *
+		 */
+
+		if (method === HTTP2_METHOD_POST) {
+			request.write(body)
+			request.end(null)
+			return
+		}
+
+		/**
+		 *
+		 */
+
+		callback(null)
 
 	}
 
@@ -258,7 +249,128 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
 	 *
 	 */
 
-	return callback(null, response.message)
+	___onSessionError (session, error, callback) {
+
+		/**
+		 *
+		 */
+
+		session.removeAllListeners(`error`)
+		session.removeAllListeners(`timeout`)
+
+		/**
+		 *
+		 */
+
+		callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+
+	}
+
+	/**
+	 *
+	 */
+
+	___onSessionTimeout (session, error, callback) {
+
+		/**
+		 *
+		 */
+
+		session.removeAllListeners(`error`)
+		session.removeAllListeners(`timeout`)
+
+		/**
+		 *
+		 */
+
+		callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+
+	}
+
+	/**
+	 *
+	 */
+
+	___onRequestError (session, request, error, callback) {
+
+		/**
+		 *
+		 */
+
+		if (session.count >= HTTP2_SESSION_MAX_REQUESTS) {
+			setTimeout(() => session.close())
+		}
+
+		/**
+		 *
+		 */
+
+		callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+
+	}
+
+	/**
+	 *
+	 */
+
+	___onRequestClose (session, request, error, callback) {
+
+		/**
+		 *
+		 */
+
+		if (session.count >= HTTP2_SESSION_MAX_REQUESTS) {
+			setTimeout(() => session.close())
+		}
+
+		/**
+		 *
+		 */
+
+		callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+
+	}
+
+	/**
+	 *
+	 */
+
+	___onResponseResponse (session, request, headers, callback) {
+
+		/**
+		 *
+		 */
+
+		const response = {}
+
+		/**
+		 *
+		 */
+
+		response.buffers = []
+		response.headers = headers
+		response.headers[HTTP2_HEADER_CONTENT_TYPE] = response.headers[HTTP2_HEADER_CONTENT_TYPE] || ``
+		response.headers[HTTP2_HEADER_CONTENT_ENCODING] = response.headers[HTTP2_HEADER_CONTENT_ENCODING] || ``
+
+		/**
+		 *
+		 */
+
+		if (response.headers[HTTP2_HEADER_STATUS] > 200) {
+			request.end()
+			callback(___error(`jiu-jitsu-http/STATUS`, `FAIL`, response.headers[HTTP2_HEADER_STATUS]))
+			return
+		}
+
+		/**
+		 *
+		 */
+
+		if (request.method === HTTP2_METHOD_POST) {
+			return middlePost(this, session, request, response, callback)
+		}
+
+	}
 
 }
 
@@ -266,138 +378,4 @@ const onRequestEnd = (message, options, session, request, response, buffers, err
  *
  */
 
-const client = (options, message, callback) => {
-
-	/**
-	 *
-	 */
-
-	callback = callback || NOOP
-
-	/**
-	 *
-	 */
-
-	message = Object.assign({}, message)
-	options = Object.assign({}, options)
-
-	/**
-	 *
-	 */
-
-	options.port = options.port || 80
-	options.host = options.host || `127.0.0.1`
-
-	/**
-	 *
-	 */
-
-	options.headers = {}
-	options.headers[HTTP2_HEADER_PATH] = `/`
-	options.headers[HTTP2_HEADER_METHOD] = `POST`
-	options.headers[HTTP2_HEADER_ACCEPT_ENCODING] = `gzip`
-	options.headers[HTTP2_HEADER_CONTENT_ENCODING] = `gzip`
-	options.headers[HTTP2_HEADER_CONTENT_TYPE] = `multipart/form-data`
-
-	/**
-	 *
-	 */
-
-	message.id = message.id || null
-	message.api = message.api || null
-	message.auth = message.auth || null
-	message.data = message.data || null
-
-	/**
-	 *
-	 */
-
-	message = JSON.stringify(message)
-	message = options.key && ___zip.encrypt(message, options) || message
-	message = options.key && ___aes.encrypt(message, options) || message
-	message = zlib.gzipSync(message)
-
-	/**
-	 *
-	 */
-
-	const authority = `https://${options.host}:${options.port}`
-
-	/**
-	 *
-	 */
-
-	if (HTTP2_SESSIONS[authority] && HTTP2_SESSIONS[authority].closed) {
-		HTTP2_SESSIONS[authority] = undefined
-	}
-
-	/**
-	 *
-	 */
-
-	if (HTTP2_SESSIONS[authority] && HTTP2_SESSIONS[authority].destroyed) {
-		HTTP2_SESSIONS[authority] = undefined
-	}
-
-	/**
-	 *
-	 */
-
-	const session = HTTP2_SESSIONS[authority] || http2.connect(authority, HTTP2_OPTIONS)
-
-	/**
-	 *
-	 */
-
-	if (!HTTP2_SESSIONS[authority]) {
-		session.count = 0
-		session.setTimeout(HTTP2_SESSION_TIMEOUT)
-		session.setMaxListeners(HTTP2_SESSION_MAX_LISTENERS)
-		session.once(`error`, (error) => onSessionError(message, options, session, error, callback))
-		session.once(`timeout`, (error) => onSessionTimeout(message, options, session, error, callback))
-	}
-
-	/**
-	 *
-	 */
-
-	if (!HTTP2_SESSIONS[authority]) {
-		HTTP2_SESSIONS[authority] = session
-	}
-
-	/**
-	 *
-	 */
-
-	if (++session.count >= HTTP2_SESSION_MAX_REQUESTS) {
-		HTTP2_SESSIONS[authority] = undefined
-	}
-
-	/**
-	 *
-	 */
-
-	const request = session.request(options.headers)
-
-	/**
-	 *
-	 */
-
-	request.once(`error`, (error) => onRequestError(message, options, session, request, error, callback))
-	request.once(`close`, (error) => onRequestClose(message, options, session, request, error, callback))
-	request.once(`response`, (headers) => onRequestResponse(message, options, session, request, headers, callback))
-
-	/**
-	 *
-	 */
-
-	request.write(message)
-	request.end(null)
-
-}
-
-/**
- *
- */
-
-module.exports = util.promisify(client)
+module.exports = Client

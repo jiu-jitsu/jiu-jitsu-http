@@ -23,13 +23,14 @@ const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCOD
  *
  */
 
-const router = (socket, request, response, options, apis) => {
+const router = (server, socket) => {
 
 	/**
 	 *
 	 */
 
-	const next = apis[socket.message.api]
+	const handlers = server.___post
+	const next = handlers[socket.message.api]
 
 	/**
 	 *
@@ -51,31 +52,37 @@ const router = (socket, request, response, options, apis) => {
  *
  */
 
-const onRequestClose = (socket, request, response, options, apis) => null
+const onRequestClose = () => null
 
 /**
  *
  */
 
-const onRequestData = (socket, request, response, options, apis, buffers, buffer) => buffers.push(buffer)
+const onRequestData = (server, socket, request, response, buffers, buffer) => buffers.push(buffer)
 
 /**
  *
  */
 
-const onRequestEnd = (socket, request, response, options, apis, buffers) => {
+const onRequestEnd = (server, socket, request, response, message) => {
 
 	/**
 	 *
 	 */
 
-	let message = Buffer.concat(buffers)
+	const options = server.___options
 
 	/**
 	 *
 	 */
 
 	try {
+
+		/**
+		 *
+		 */
+
+		message = Buffer.concat(message)
 
 		/**
 		 *
@@ -122,7 +129,7 @@ const onRequestEnd = (socket, request, response, options, apis, buffers) => {
 	 *
 	 */
 
-	router(socket, request, response, options, apis)
+	router(server, socket, request, response)
 
 }
 
@@ -130,7 +137,7 @@ const onRequestEnd = (socket, request, response, options, apis, buffers) => {
  *
  */
 
-module.exports = (socket, request, response, options, apis) => {
+module.exports = (server, socket, request, response) => {
 
 	/**
 	 *
@@ -142,8 +149,8 @@ module.exports = (socket, request, response, options, apis) => {
 	 *
 	 */
 
-	request.on(`close`, (error) => onRequestClose(socket, request, response, options, apis, buffers))
-	request.on(`data`, (buffer) => onRequestData(socket, request, response, options, apis, buffers, buffer))
-	request.on(`end`, (error) => onRequestEnd(socket, request, response, options, apis, buffers))
+	request.on(`end`, (error) => onRequestEnd(server, socket, request, response, buffers, error))
+	request.on(`data`, (buffer) => onRequestData(server, socket, request, response, buffers, buffer))
+	request.on(`close`, (error) => onRequestClose(server, socket, request, response, buffers, error))
 
 }
