@@ -94,13 +94,13 @@ const onRequestEnd = (client, session, request, response, error, callback) => {
 		 *
 		 */
 
-	} catch (cause) {
+	} catch (error) {
 
 		/**
 		 *
 		 */
 
-		return callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, cause))
+		return callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
 
 	}
 

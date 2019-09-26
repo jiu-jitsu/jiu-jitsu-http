@@ -105,7 +105,7 @@ const onRequestEnd = (server, socket, request, response, message) => {
 		 *
 		 */
 
-	} catch (cause) {
+	} catch (error) {
 
 		/**
 		 *

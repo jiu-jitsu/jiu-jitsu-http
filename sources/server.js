@@ -243,7 +243,7 @@ class Server extends events {
 		 *
 		 */
 
-		if (method === HTTP2_METHOD_GET && body.constructor === Array) {
+		if (method === HTTP2_METHOD_GET) {
 			return this.___socketSendFiles(socket, request, response, body)
 		}
 
@@ -251,7 +251,7 @@ class Server extends events {
 		 *
 		 */
 
-		if (method === HTTP2_METHOD_PUT && body.constructor === Object) {
+		if (method === HTTP2_METHOD_PUT) {
 			return
 		}
 
@@ -259,7 +259,7 @@ class Server extends events {
 		 *
 		 */
 
-		if (method === HTTP2_METHOD_POST && body.constructor === Object) {
+		if (method === HTTP2_METHOD_POST) {
 			return this.___socketSendMessage(socket, request, response, body)
 		}
 
@@ -422,6 +422,13 @@ class Server extends events {
 
 		socket.file = null
 		socket.message = null
+		socket.request = null
+		socket.response = null
+
+		/**
+		 *
+		 */
+
 		socket.send = (message) => this.___socketSend(socket, request, response, message)
 		socket.destroy = (message) => this.___socketDestroy(socket, request, response, message)
 
