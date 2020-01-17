@@ -100,7 +100,13 @@ const onRequestEnd = (client, session, request, response, error, callback) => {
 		 *
 		 */
 
-		return callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_POST_ERROR`, error)
+
+		/**
+		 *
+		 */
+
+		return callback(error)
 
 	}
 

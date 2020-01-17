@@ -225,7 +225,7 @@ class Client {
 
 		request.once(`error`, (error) => this.___onRequestError(session, request, error, callback))
 		request.once(`close`, (error) => this.___onRequestClose(session, request, error, callback))
-		request.once(`response`, (headers) => this.___onResponseResponse(session, request, headers, callback))
+		request.once(`response`, (headers) => this.onRequestResponse(session, request, headers, callback))
 
 		/**
 		 *
@@ -262,7 +262,13 @@ class Client {
 		 *
 		 */
 
-		callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_ERROR`, error)
+
+		/**
+		 *
+		 */
+
+		callback(error)
 
 	}
 
@@ -283,7 +289,13 @@ class Client {
 		 *
 		 */
 
-		callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_TIMEOUT`, error)
+
+		/**
+		 *
+		 */
+
+		callback(error)
 
 	}
 
@@ -305,7 +317,13 @@ class Client {
 		 *
 		 */
 
-		callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_REQUEST_ERROR`, error)
+
+		/**
+		 *
+		 */
+
+		callback(error)
 
 	}
 
@@ -327,7 +345,13 @@ class Client {
 		 *
 		 */
 
-		callback(___error(`jiu-jitsu-http/FAILED`, `FAIL`, error))
+		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_REQUEST_CLOSE`, error)
+
+		/**
+		 *
+		 */
+
+		callback(error)
 
 	}
 
@@ -335,7 +359,7 @@ class Client {
 	 *
 	 */
 
-	___onResponseResponse (session, request, headers, callback) {
+	onRequestResponse (session, request, headers, callback) {
 
 		/**
 		 *
@@ -356,10 +380,16 @@ class Client {
 		 *
 		 */
 
-		if (response.headers[HTTP2_HEADER_STATUS] > 200) {
+		const responseHeaderStatus = response.headers[HTTP2_HEADER_STATUS]
+
+		/**
+		 *
+		 */
+
+		if (responseHeaderStatus > 200) {
 			request.end()
-			callback(___error(`jiu-jitsu-http/STATUS`, `FAIL`, response.headers[HTTP2_HEADER_STATUS]))
-			return
+			const error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_RESPONSE_HEADER_STATUS`, responseHeaderStatus)
+			return callback(error)
 		}
 
 		/**
