@@ -1,13 +1,13 @@
 
 ### How to generate ssl certificates
 
-`openssl req -x509 -sha256 -nodes -days 3650 -newkey rsa:2048 -keyout server.key -out server.cert -config openssl.conf`
+`openssl req -x509 -sha256 -nodes -days 3650 -newkey rsa:1024 -keyout server.key -out server.cert -config openssl.conf`
 
 ##### Create self signed certificate for domain and subdomains
 
 ```
 [req]
-default_bits = 2048
+default_bits = 1024
 default_keyfile = oats.key
 encrypt_key = no
 utf8 = yes
