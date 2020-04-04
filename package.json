@@ -1,5 +1,5 @@
 {
-	"name": "jiu-jitsu-https",
+	"name": "jiu-jitsu-http",
 	"version": "0.0.1",
 	"author": "Vitaly Anagorsky <vitaly@anagorsky.com>",
 	"dependencies": {
