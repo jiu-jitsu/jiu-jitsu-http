@@ -124,6 +124,7 @@ const onRequestEnd = (server, socket, request, response, message) => {
 	socket.message.api = message.api
 	socket.message.auth = message.auth
 	socket.message.data = message.data
+	socket.message.schema = message.schema
 
 	/**
 	 *
