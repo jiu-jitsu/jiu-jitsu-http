@@ -262,7 +262,7 @@ class Client {
 		 *
 		 */
 
-		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_ERROR`, error)
+		error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_ERROR`, error)
 
 		/**
 		 *
@@ -289,7 +289,7 @@ class Client {
 		 *
 		 */
 
-		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_TIMEOUT`, error)
+		error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_TIMEOUT`, error)
 
 		/**
 		 *
@@ -317,7 +317,7 @@ class Client {
 		 *
 		 */
 
-		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_REQUEST_ERROR`, error)
+		error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_REQUEST_ERROR`, error)
 
 		/**
 		 *
@@ -345,7 +345,7 @@ class Client {
 		 *
 		 */
 
-		error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_REQUEST_CLOSE`, error)
+		error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_REQUEST_CLOSE`, error)
 
 		/**
 		 *
@@ -388,7 +388,7 @@ class Client {
 
 		if (responseHeaderStatus > 200) {
 			request.end()
-			const error = ___error(null, `jiu-jitsu-http`, `FAIL`, `HTTP_RESPONSE_HEADER_STATUS`, responseHeaderStatus)
+			const error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_RESPONSE_HEADER_STATUS`, responseHeaderStatus)
 			return callback(error)
 		}
 
