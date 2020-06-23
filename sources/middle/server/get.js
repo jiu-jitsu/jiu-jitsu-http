@@ -26,7 +26,6 @@ module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders
 	try {
 		await make(server, socket, stream, incomingHeaders, outgoingHeaders)
 	} catch (error) {
-		console.log(error)
 		stream.destroy()
 	}
 }
@@ -106,8 +105,6 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 		 *
 		 */
 
-		console.log('pushAllowed:', stream.pushAllowed)
-
 		if (!file.push) {
 			sendFile(server, socket, stream, incomingHeaders, {}, file)
 		} else {
@@ -159,15 +156,15 @@ const sendFile = (server, socket, stream, incomingHeaders, outgoingHeaders = {},
 	 *
 	 */
 
-	stream.on(`error`, (error) => console.log(error))
+	stream.on(`error`, (error) => error)
 	stream.respond(outgoingHeaders)
 
 	/**
 	 *
 	 */
 
-	fileGzipStream.on(`error`, (error) => console.log(error))
-	fileReadStream.on(`error`, (error) => console.log(error))
+	fileGzipStream.on(`error`, (error) => error)
+	fileReadStream.on(`error`, (error) => error)
 
 	/**
 	 *
