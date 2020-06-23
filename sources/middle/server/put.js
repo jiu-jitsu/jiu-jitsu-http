@@ -3,12 +3,6 @@
  *
  */
 
-module.exports = (server, socket, request, response) => {
-
-	/**
-	 *
-	 */
-
-	delete server.___put[socket.url.pathname]
-
+module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders = {}) => {
+	stream.destroy()
 }

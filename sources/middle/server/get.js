@@ -3,47 +3,122 @@
  *
  */
 
-const router = (server, socket, request, response) => {
+const fs = require(`fs`)
+const util = require(`util`)
+const zlib = require(`zlib`)
+const http2 = require(`http2`)
+
+/**
+ *
+ */
+
+const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
+const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
+const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
+const HTTP2_HEADER_CACHE_CONTROL = http2.constants.HTTP2_HEADER_CACHE_CONTROL
+const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCODING
+
+/**
+ *
+ */
+
+module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders = {}) => {
+	try {
+		await make(server, socket, stream, incomingHeaders, outgoingHeaders)
+	} catch (error) {
+		console.log(error)
+		stream.destroy()
+	}
+}
+
+/**
+ *
+ */
+
+const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) => {
+
+	/**
+	 *
+	 */
+
+	if (incomingHeaders[HTTP2_HEADER_PATH] === `/favicon.ico`) {
+		return stream.destroy()
+	}
 
 	/**
 	 *
 	 */
 
 	const handlers = server.___get
+	const handler = handlers[`*`]
 
 	/**
 	 *
 	 */
 
-	if (!handlers[request.url.pathname] && request.url.pathname === `/favicon.ico`) {
-		response.writeHead(200)
-		response.end()
-		return
+	if (!handler) {
+		throw ___error(`jiu-jitsu-http`, `FAIL`, `HANDLER_NOT_FOUND`)
 	}
 
 	/**
 	 *
 	 */
 
-	if (!handlers[request.url.pathname] && handlers[`*`]) {
-		handlers[`*`](socket)
-		return
-	}
+	await handler(socket)
 
 	/**
 	 *
 	 */
 
-	if (handlers[request.url.pathname]) {
-		handlers[request.url.pathname](socket)
+	if (stream.closed) {
 		return
 	}
+
+	/**
+	 * file: {
+	 *  source: String,
+	 *  type: String,
+	 *  path: String,
+	 *  push: Boolean,
+	 *  zip: Boolean
+	 * }
+	 */
+
+	const files = socket.response
 
 	/**
 	 *
 	 */
 
-	socket.destroy()
+	for (const file of files) {
+
+		/**
+		 *
+		 */
+
+		file.type =
+			file.source.lastIndexOf(`.html`) > -1 && `text/html` ||
+			file.source.lastIndexOf(`.js`) > -1 && `text/javascript` ||
+			file.source.lastIndexOf(`.ico`) > -1 && `image/x-icon` ||
+			file.source.lastIndexOf(`.woff2`) > -1 && `font/woff2`
+
+		/**
+		 *
+		 */
+
+		console.log('pushAllowed:', stream.pushAllowed)
+
+		if (!file.push) {
+			sendFile(server, socket, stream, incomingHeaders, {}, file)
+		} else {
+			const pushHeaders = {}
+			const pushOptions = {}
+			pushHeaders[HTTP2_HEADER_PATH] = file.source
+			pushHeaders[HTTP2_HEADER_CONTENT_TYPE] = file.type
+			pushOptions.parent = stream.id
+			stream.pushStream(pushHeaders, pushOptions, (error, pushStream) => sendFile(server, socket, pushStream, incomingHeaders, {}, file))
+		}
+	}
 
 }
 
@@ -51,4 +126,55 @@ const router = (server, socket, request, response) => {
  *
  */
 
-module.exports = router
+const sendFile = (server, socket, stream, incomingHeaders, outgoingHeaders = {}, file) => {
+
+	/**
+	 *
+	 */
+
+	const fileGzipStream = zlib.createGzip()
+	const fileReadStream = fs.createReadStream(file.path)
+
+	/**
+	 *
+	 */
+
+	if (!file.push) {
+		outgoingHeaders[HTTP2_HEADER_STATUS] = 200
+		outgoingHeaders[HTTP2_HEADER_CONTENT_TYPE] = file.type
+	} else {
+		outgoingHeaders[HTTP2_HEADER_CACHE_CONTROL] = `public, max-age=0`
+		outgoingHeaders[HTTP2_HEADER_CONTENT_TYPE] = file.type
+	}
+
+	/**
+	 *
+	 */
+
+	if (file.zip) {
+		outgoingHeaders[HTTP2_HEADER_CONTENT_ENCODING] = `gzip`
+	}
+
+	/**
+	 *
+	 */
+
+	stream.on(`error`, (error) => console.log(error))
+	stream.respond(outgoingHeaders)
+
+	/**
+	 *
+	 */
+
+	fileGzipStream.on(`error`, (error) => console.log(error))
+	fileReadStream.on(`error`, (error) => console.log(error))
+
+	/**
+	 *
+	 */
+
+	file.zip
+		? fileReadStream.pipe(fileGzipStream).pipe(stream)
+		: fileReadStream.pipe(stream)
+
+}

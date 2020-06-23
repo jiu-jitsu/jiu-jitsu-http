@@ -12,146 +12,147 @@ const http2 = require(`http2`)
 
 const ___aes = require(`jiu-jitsu-aes`)
 const ___zip = require(`jiu-jitsu-zip`)
+const ___error = require(`jiu-jitsu-error`)
 
 /**
  *
  */
 
+const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
+const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
 const HTTP2_HEADER_CONTENT_ENCODING = http2.constants.HTTP2_HEADER_CONTENT_ENCODING
+const HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = http2.constants.HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN
+const HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS = http2.constants.HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS
 
 /**
  *
  */
 
-const router = (server, socket) => {
-
-	/**
-	 *
-	 */
-
-	const handlers = server.___post
-	const next = handlers[socket.message.api]
-
-	/**
-	 *
-	 */
-
-	if (!next) {
-		return socket.destroy()
-	}
-
-	/**
-	 *
-	 */
-
-	next(socket)
-
-}
-
-/**
- *
- */
-
-const onRequestClose = () => null
-
-/**
- *
- */
-
-const onRequestData = (server, socket, request, response, buffers, buffer) => buffers.push(buffer)
-
-/**
- *
- */
-
-const onRequestEnd = (server, socket, request, response, message) => {
-
-	/**
-	 *
-	 */
-
-	const options = server.___options
-
-	/**
-	 *
-	 */
-
+module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders = {}) => {
 	try {
-
-		/**
-		 *
-		 */
-
-		message = Buffer.concat(message)
-
-		/**
-		 *
-		 */
-
-		if (request.headers[HTTP2_HEADER_CONTENT_ENCODING].indexOf(`gzip`) > -1) {
-			message = zlib.unzipSync(message)
-		}
-
-		/**
-		 *
-		 */
-
-		message = message.toString()
-		message = options.key && ___aes.decrypt(message, options) || message
-		message = options.key && ___zip.decrypt(message, options) || message
-		message = JSON.parse(message)
-
-		/**
-		 *
-		 */
-
+		await make(server, socket, stream, incomingHeaders, outgoingHeaders)
 	} catch (error) {
-
-		/**
-		 *
-		 */
-
-		return socket.destroy()
-
+		stream.destroy()
 	}
-
-	/**
-	 *
-	 */
-
-	socket.message = {}
-	socket.message.id = message.id
-	socket.message.api = message.api
-	socket.message.auth = message.auth
-	socket.message.data = message.data
-	socket.message.schema = message.schema
-
-	/**
-	 *
-	 */
-
-	router(server, socket, request, response)
-
 }
 
 /**
  *
  */
 
-module.exports = (server, socket, request, response) => {
+const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) => {
+
+	/**
+	 *
+	 */
+
+	let incomingMessage
+	let outgoingMessage
 
 	/**
 	 *
 	 */
 
 	const buffers = []
+	const options = server.___options
+	const handlers = server.___post
 
 	/**
 	 *
 	 */
 
-	request.on(`end`, (error) => onRequestEnd(server, socket, request, response, buffers, error))
-	request.on(`data`, (buffer) => onRequestData(server, socket, request, response, buffers, buffer))
-	request.on(`close`, (error) => onRequestClose(server, socket, request, response, buffers, error))
+	for await (const buffer of stream) {
+		buffers.push(buffer)
+	}
+
+	/**
+	 *
+	 */
+
+	incomingMessage = Buffer.concat(buffers)
+
+	/**
+	 *
+	 */
+
+	if (incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING].indexOf(`gzip`) > -1) {
+		incomingMessage = zlib.unzipSync(incomingMessage)
+	}
+
+	/**
+	 *
+	 */
+
+	incomingMessage = incomingMessage.toString()
+	incomingMessage = options.key && ___aes.decrypt(incomingMessage, options) || incomingMessage
+	incomingMessage = options.key && ___zip.decrypt(incomingMessage, options) || incomingMessage
+	incomingMessage = JSON.parse(incomingMessage)
+
+	/**
+	 *
+	 */
+
+	const handler = handlers[incomingMessage.api]
+
+	/**
+	 *
+	 */
+
+	if (!handler) {
+		throw ___error(`jiu-jitsu-http`, `FAIL`, `HANDLER_NOT_FOUND`)
+	}
+
+	/**
+	 *
+	 */
+
+	socket.request = incomingMessage
+
+	/**
+	 *
+	 */
+
+	await handler(socket)
+
+	/**
+	 *
+	 */
+
+	if (stream.closed) {
+		return
+	}
+
+	/**
+	 *
+	 */
+
+	outgoingMessage = socket.response
+
+	/**
+	 *
+	 */
+
+	outgoingMessage = JSON.stringify(outgoingMessage)
+	outgoingMessage = options.key && ___zip.encrypt(outgoingMessage, options) || outgoingMessage
+	outgoingMessage = options.key && ___aes.encrypt(outgoingMessage, options) || outgoingMessage
+	outgoingMessage = zlib.gzipSync(outgoingMessage)
+
+	/**
+	 *
+	 */
+
+	outgoingHeaders[HTTP2_HEADER_STATUS] = 200
+	outgoingHeaders[HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN] = `*`
+	outgoingHeaders[HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS] = `*`
+	outgoingHeaders[HTTP2_HEADER_CONTENT_TYPE] = `application/json`
+	outgoingHeaders[HTTP2_HEADER_CONTENT_ENCODING] = `gzip`
+
+	/**
+	 *
+	 */
+
+	stream.respond(outgoingHeaders)
+	stream.write(outgoingMessage)
+	stream.end(null)
 
 }
