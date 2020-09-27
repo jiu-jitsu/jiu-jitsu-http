@@ -75,6 +75,13 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 *
 	 */
 
+	incomingHeaders[HTTP2_HEADER_CONTENT_TYPE] = incomingHeaders[HTTP2_HEADER_CONTENT_TYPE] || ``
+	incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING] = incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING] || ``
+
+	/**
+	 *
+	 */
+
 	if (incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING].indexOf(`gzip`) > -1) {
 		incomingMessage = zlib.unzipSync(incomingMessage)
 	}

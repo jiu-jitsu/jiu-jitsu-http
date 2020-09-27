@@ -109,7 +109,7 @@ class Server {
 		this.server = http2.createSecureServer(settings)
 		this.server.on(`error`, (error) => this.___onError(error))
 		this.server.on(`listening`, (error) => this.___onListening(error, resolve))
-		this.server.on(`session`, (error) => this.___onSession(error))
+		this.server.on(`session`, (session) => this.___onSession(session))
 		this.server.on(`stream`, (stream, headers) => this.___onStream(stream, headers))
 		this.server.listen(options.port, options.host)
 	}
