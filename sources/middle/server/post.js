@@ -99,7 +99,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	if (!handler) {
-		throw ___error(`jiu-jitsu-http`, `FAIL`, `HANDLER_NOT_FOUND`)
+		throw ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_HANDLER_NOT_FOUND`)
 	}
 
 	/**

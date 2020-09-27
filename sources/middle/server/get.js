@@ -12,6 +12,12 @@ const http2 = require(`http2`)
  *
  */
 
+const fsAccessPromise = util.promisify(fs.access)
+
+/**
+ *
+ */
+
 const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
 const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
 const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
@@ -56,7 +62,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	if (!handler) {
-		throw ___error(`jiu-jitsu-http`, `FAIL`, `HANDLER_NOT_FOUND`)
+		throw ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_HANDLER_NOT_FOUND`)
 	}
 
 	/**
@@ -95,9 +101,20 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 		 *
 		 */
 
+		try {
+			await fsAccessPromise(file.path, fs.F_OK)
+		} catch (error) {
+			return stream.destroy()
+		}
+
+		/**
+		 *
+		 */
+
 		file.type =
 			file.source.lastIndexOf(`.html`) > -1 && `text/html` ||
 			file.source.lastIndexOf(`.js`) > -1 && `text/javascript` ||
+			file.source.lastIndexOf(`.jpg`) > -1 && `image/jpeg` ||
 			file.source.lastIndexOf(`.ico`) > -1 && `image/x-icon` ||
 			file.source.lastIndexOf(`.woff2`) > -1 && `font/woff2`
 

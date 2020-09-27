@@ -6,13 +6,13 @@
 const fs = require(`fs`)
 const url = require(`url`)
 const http2 = require(`http2`)
-const events = require(`events`)
 const querystring = require(`querystring`)
 
 /**
  *
  */
 
+const ___log = require(`jiu-jitsu-log`)
 const ___uuid = require(`jiu-jitsu-uuid`)
 
 /**
@@ -49,40 +49,22 @@ const HTTP2_PADDING_STRATEGY_MAX = http2.constants.PADDING_STRATEGY_MAX
  *
  */
 
-class Server extends events {
+class Server {
 
 	/**
 	 *
 	 */
 
 	constructor (options) {
-
-		/**
-		 *
-		 */
-
-		super()
-
-		/**
-		 *
-		 */
-
 		this.___get = {}
 		this.___put = {}
 		this.___post = {}
-		this.___settings = {}
-
-		/**
-		 *
-		 */
-
 		this.___options = options
+		this.___settings = {}
 		this.___settings.key = fs.readFileSync(`${options.dir}/${options.ssl}.key`).toString()
 		this.___settings.cert = fs.readFileSync(`${options.dir}/${options.ssl}.cert`).toString()
 		this.___settings.paddingStrategy = HTTP2_PADDING_STRATEGY_MAX
 		this.___settings.peerMaxConcurrentStreams = HTTP2_PEER_MAX_CONCURRENT_STREAMS
-		this.___listen()
-
 	}
 
 	/**
@@ -113,13 +95,20 @@ class Server extends events {
 	 *
 	 */
 
-	___listen () {
+	async connect () {
+		await new Promise((resolve) => this.___connect(resolve))
+	}
+
+	/**
+	 *
+	 */
+
+	___connect (resolve) {
 		const options = this.___options
 		const settings = this.___settings
 		this.server = http2.createSecureServer(settings)
-		this.server.on(`close`, (error) => this.___onClose(error))
 		this.server.on(`error`, (error) => this.___onError(error))
-		this.server.on(`listening`, (error) => this.___onListening(error))
+		this.server.on(`listening`, (error) => this.___onListening(error, resolve))
 		this.server.on(`session`, (error) => this.___onSession(error))
 		this.server.on(`stream`, (stream, headers) => this.___onStream(stream, headers))
 		this.server.listen(options.port, options.host)
@@ -129,24 +118,20 @@ class Server extends events {
 	 *
 	 */
 
-	___onClose (error) {
-		process.nextTick(() => this.emit(`close`, error))
-	}
-
-	/**
-	 *
-	 */
-
 	___onError (error) {
-		process.nextTick(() => this.emit(`error`, error))
+		const options = this.___options
+		___log(`jiu-jitsu-http`, `FAIL`, `!`, error, true)
+		process.exit(1)
 	}
 
 	/**
 	 *
 	 */
 
-	___onListening (error) {
-		process.nextTick(() => this.emit(`ready`, error))
+	___onListening (error, resolve) {
+		const options = this.___options
+		___log(`jiu-jitsu-http`, `OK`, `✔`)
+		resolve(error)
 	}
 
 	/**
@@ -164,6 +149,7 @@ class Server extends events {
 	 */
 
 	___onSessionError (session, error) {
+		___log(`jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_ERROR`, error, true)
 		session.close()
 		session.destroy()
 	}
@@ -173,6 +159,7 @@ class Server extends events {
 	 */
 
 	___onSessionTimeout (session, error) {
+		___log(`jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_TIMEOUT`, error, true)
 		session.close()
 		session.destroy()
 	}

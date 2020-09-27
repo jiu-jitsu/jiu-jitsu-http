@@ -66,7 +66,7 @@ HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_CONTENT_TYPE] = `application/json`
  *
  */
 
-module.exports = (client, outgoingMessage, callback) => {
+module.exports = (client, outgoingMessage, resolve, reject) => {
 
 	/**
 	 *
@@ -152,9 +152,9 @@ module.exports = (client, outgoingMessage, callback) => {
 	 *
 	 */
 
-	stream.once(`error`, (error) => ___onStreamError(client, session, stream, error, callback))
-	stream.once(`close`, (error) => ___onStreamClose(client, session, stream, error, callback))
-	stream.once(`response`, (incomingHeaders) => ___onStreamResponse(client, session, stream, incomingHeaders, callback))
+	stream.once(`error`, (error) => ___onStreamError(client, session, stream, error, resolve, reject))
+	stream.once(`close`, (error) => ___onStreamClose(client, session, stream, error, resolve, reject))
+	stream.once(`response`, (incomingHeaders) => ___onStreamResponse(client, session, stream, incomingHeaders, resolve, reject))
 
 	/**
 	 *
@@ -187,25 +187,25 @@ const ___onSessionTimeout = (client, session, error) => {
  *
  */
 
-const ___onStreamError = (client, session, stream, error, callback) => {
+const ___onStreamError = (client, session, stream, error, resolve, reject) => {
 	error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_STREAM_ERROR`, error)
-	callback(error)
+	reject(error)
 }
 
 /**
  *
  */
 
-const ___onStreamClose = (client, session, stream, error, callback) => {
+const ___onStreamClose = (client, session, stream, error, resolve, reject) => {
 	error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_STREAM_CLOSE`, error)
-	callback(error)
+	reject(error)
 }
 
 /**
  *
  */
 
-const ___onStreamResponse = (client, session, stream, incomingHeaders, callback) => {
+const ___onStreamResponse = (client, session, stream, incomingHeaders, resolve, reject) => {
 
 	/**
 	 *
@@ -221,15 +221,15 @@ const ___onStreamResponse = (client, session, stream, incomingHeaders, callback)
 	if (status > 200) {
 		stream.end()
 		const error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_RESPONSE_HEADER_STATUS`, status)
-		return callback(error)
+		return reject(error)
 	}
 
 	/**
 	 *
 	 */
 
-	stream.on(`data`, (data) => ___onStreamData(client, session, stream, incomingHeaders, incomingMessage, data, callback))
-	stream.on(`end`, (error) => ___onStreamEnd(client, session, stream, incomingHeaders, incomingMessage, error, callback))
+	stream.on(`data`, (data) => ___onStreamData(client, session, stream, incomingHeaders, incomingMessage, data, resolve, reject))
+	stream.on(`end`, (error) => ___onStreamEnd(client, session, stream, incomingHeaders, incomingMessage, error, resolve, reject))
 
 }
 
@@ -237,7 +237,7 @@ const ___onStreamResponse = (client, session, stream, incomingHeaders, callback)
  *
  */
 
-const ___onStreamData = (client, session, stream, incomingHeaders, incomingMessage, data, callback) => {
+const ___onStreamData = (client, session, stream, incomingHeaders, incomingMessage, data, resolve, reject) => {
 	incomingMessage.push(data)
 }
 
@@ -245,7 +245,7 @@ const ___onStreamData = (client, session, stream, incomingHeaders, incomingMessa
  *
  */
 
-const ___onStreamEnd = (client, session, stream, incomingHeaders, incomingMessage, error, callback) => {
+const ___onStreamEnd = (client, session, stream, incomingHeaders, incomingMessage, error, resolve, reject) => {
 
 	/**
 	 *
@@ -293,12 +293,7 @@ const ___onStreamEnd = (client, session, stream, incomingHeaders, incomingMessag
 		 */
 
 		error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_POST_ERROR`, error)
-
-		/**
-		 *
-		 */
-
-		return callback(error)
+		return reject(error)
 
 	}
 
@@ -306,6 +301,6 @@ const ___onStreamEnd = (client, session, stream, incomingHeaders, incomingMessag
 	 *
 	 */
 
-	return callback(null, incomingMessage)
+	return resolve(incomingMessage)
 
 }
