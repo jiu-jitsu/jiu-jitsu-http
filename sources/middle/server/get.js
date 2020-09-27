@@ -155,9 +155,10 @@ const sendFile = (server, socket, stream, incomingHeaders, outgoingHeaders = {},
 
 	if (!file.push) {
 		outgoingHeaders[HTTP2_HEADER_STATUS] = 200
+		outgoingHeaders[HTTP2_HEADER_CACHE_CONTROL] = `no-store`
 		outgoingHeaders[HTTP2_HEADER_CONTENT_TYPE] = file.type
 	} else {
-		outgoingHeaders[HTTP2_HEADER_CACHE_CONTROL] = `public, max-age=0`
+		outgoingHeaders[HTTP2_HEADER_CACHE_CONTROL] = `no-store`
 		outgoingHeaders[HTTP2_HEADER_CONTENT_TYPE] = file.type
 	}
 
