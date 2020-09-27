@@ -12,12 +12,6 @@ const http2 = require(`http2`)
  *
  */
 
-const fsAccessPromise = util.promisify(fs.access)
-
-/**
- *
- */
-
 const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
 const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
 const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
@@ -96,16 +90,6 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	for (const file of files) {
-
-		/**
-		 *
-		 */
-
-		try {
-			await fsAccessPromise(file.path, fs.F_OK)
-		} catch (error) {
-			return stream.destroy()
-		}
 
 		/**
 		 *
