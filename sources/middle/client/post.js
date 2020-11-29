@@ -89,7 +89,7 @@ module.exports = async (client, outgoingMessage, incomingMessage) => {
 	outgoingMessage = JSON.stringify(outgoingMessage)
 	outgoingMessage = options.key && await ___zip.encrypt(outgoingMessage, options) || outgoingMessage
 	outgoingMessage = options.key && await ___aes.encrypt(outgoingMessage, options) || outgoingMessage
-	outgoingMessage = zlib.gzipSync(outgoingMessage)
+	outgoingMessage = await new Promise((resolve) => zlib.gzip(outgoingMessage, resolve))
 
 	/**
 	 *
@@ -206,7 +206,7 @@ module.exports = async (client, outgoingMessage, incomingMessage) => {
 	 */
 
 	if (incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING].indexOf("gzip") > -1) {
-		incomingMessage = zlib.unzipSync(incomingMessage)
+		incomingMessage = await new Promise((resolve) => zlib.unzip(incomingMessage, resolve))
 	}
 
 	/**
