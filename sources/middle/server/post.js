@@ -3,6 +3,7 @@
  *
  */
 
+const util = require("util")
 const zlib = require("zlib")
 const http2 = require("http2")
 
@@ -83,7 +84,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	if (incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING].indexOf("gzip") > -1) {
-		incomingMessage = await new Promise((resolve) => zlib.unzip(incomingMessage, resolve))
+		incomingMessage = await util.promisify(zlib.unzip)(incomingMessage)
 	}
 
 	/**
@@ -142,7 +143,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	outgoingMessage = JSON.stringify(outgoingMessage)
 	outgoingMessage = options.key && await ___zip.encrypt(outgoingMessage, options) || outgoingMessage
 	outgoingMessage = options.key && await ___aes.encrypt(outgoingMessage, options) || outgoingMessage
-	outgoingMessage = await new Promise((resolve) => zlib.gzip(outgoingMessage, resolve))
+	outgoingMessage = await util.promisify(zlib.gzip)(outgoingMessage)
 
 	/**
 	 *
