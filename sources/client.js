@@ -3,7 +3,7 @@
  *
  */
 
-const middlePost = require(`./middle/client/post`)
+const middlePost = require("./middle/client/post")
 
 /**
  *
@@ -37,7 +37,7 @@ class Client {
 	 */
 
 	async message (message) {
-		return await new Promise((resolve, reject) => middlePost(this, message, resolve, reject))
+		return middlePost(this, message)
 	}
 
 }

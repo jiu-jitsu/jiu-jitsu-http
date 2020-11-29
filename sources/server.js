@@ -3,26 +3,26 @@
  *
  */
 
-const fs = require(`fs`)
-const url = require(`url`)
-const http2 = require(`http2`)
-const querystring = require(`querystring`)
+const fs = require("fs")
+const url = require("url")
+const http2 = require("http2")
+const querystring = require("querystring")
 
 /**
  *
  */
 
-const ___log = require(`jiu-jitsu-log`)
-const ___uuid = require(`jiu-jitsu-uuid`)
+const ___log = require("jiu-jitsu-log")
+const ___uuid = require("jiu-jitsu-uuid")
 
 /**
  *
  */
 
-const middleGet = require(`./middle/server/get`)
-const middlePut = require(`./middle/server/put`)
-const middlePost = require(`./middle/server/post`)
-const middleOptions = require(`./middle/server/options`)
+const middleGet = require("./middle/server/get")
+const middlePut = require("./middle/server/put")
+const middlePost = require("./middle/server/post")
+const middleOptions = require("./middle/server/options")
 
 /**
  *
@@ -96,21 +96,21 @@ class Server {
 	 */
 
 	async connect () {
-		await new Promise((resolve) => this.___connect(resolve))
+		await new Promise(async (resolve) => await this.___connect(resolve))
 	}
 
 	/**
 	 *
 	 */
 
-	___connect (resolve) {
+	async ___connect (resolve) {
 		const options = this.___options
 		const settings = this.___settings
 		this.server = http2.createSecureServer(settings)
-		this.server.on(`error`, (error) => this.___onError(error))
-		this.server.on(`listening`, (error) => this.___onListening(error, resolve))
-		this.server.on(`session`, (session) => this.___onSession(session))
-		this.server.on(`stream`, (stream, headers) => this.___onStream(stream, headers))
+		this.server.on("error", async (error) => await this.___onError(error))
+		this.server.on("listening", async (error) => await this.___onListening(error, resolve))
+		this.server.on("session", async (session) => await this.___onSession(session))
+		this.server.on("stream", async (stream, headers) => await this.___onStream(stream, headers))
 		this.server.listen(options.port, options.host)
 	}
 
@@ -118,9 +118,8 @@ class Server {
 	 *
 	 */
 
-	___onError (error) {
-		const options = this.___options
-		___log(`jiu-jitsu-http`, `FAIL`, `!`, error, true)
+	async ___onError (error) {
+		await ___log("jiu-jitsu-http", "FAIL", "!", error, true)
 		process.exit(1)
 	}
 
@@ -128,9 +127,8 @@ class Server {
 	 *
 	 */
 
-	___onListening (error, resolve) {
-		const options = this.___options
-		___log(`jiu-jitsu-http`, `OK`, `✔`)
+	async ___onListening (error, resolve) {
+		await ___log("jiu-jitsu-http", "OK", "✔")
 		resolve(error)
 	}
 
@@ -138,18 +136,18 @@ class Server {
 	 *
 	 */
 
-	___onSession (session) {
+	async ___onSession (session) {
 		session.setTimeout(HTTP2_SESSION_TIMEOUT)
-		session.on(`once`, (error) => this.___onSessionError(session, error))
-		session.on(`once`, (error) => this.___onSessionTimeout(session, error))
+		session.on("once", async (error) => await this.___onSessionError(session, error))
+		session.on("once", async (error) => await this.___onSessionTimeout(session, error))
 	}
 
 	/**
 	 *
 	 */
 
-	___onSessionError (session, error) {
-		___log(`jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_ERROR`, error, true)
+	async ___onSessionError (session, error) {
+		await ___log("jiu-jitsu-http", "FAIL", "HTTP_SESSION_ERROR", error, true)
 		session.close()
 		session.destroy()
 	}
@@ -158,8 +156,8 @@ class Server {
 	 *
 	 */
 
-	___onSessionTimeout (session, error) {
-		___log(`jiu-jitsu-http`, `FAIL`, `HTTP_SESSION_TIMEOUT`, error, true)
+	async ___onSessionTimeout (session, error) {
+		await ___log("jiu-jitsu-http", "FAIL", "HTTP_SESSION_TIMEOUT", error, true)
 		session.close()
 		session.destroy()
 	}
@@ -168,7 +166,7 @@ class Server {
 	 *
 	 */
 
-	___onStream (stream, headers) {
+	async ___onStream (stream, headers) {
 
 		/**
 		 *
@@ -250,7 +248,7 @@ class Server {
 		const path = headers[HTTP2_HEADER_PATH]
 		const options = url.parse(`${schema}://${authority}${path}`)
 		options.query = querystring.parse(options.query)
-		options.protocol = options.protocol.split(`:`)[0]
+		options.protocol = options.protocol.split(":")[0]
 		return options
 	}
 

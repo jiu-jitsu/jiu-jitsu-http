@@ -3,7 +3,7 @@
  *
  */
 
-const http2 = require(`http2`)
+const http2 = require("http2")
 
 /**
  *
@@ -36,8 +36,8 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	outgoingHeaders[HTTPS_HEADER_STATUS] = 200
-	outgoingHeaders[HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN] = `*`
-	outgoingHeaders[HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS] = `*`
+	outgoingHeaders[HTTP2_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN] = "*"
+	outgoingHeaders[HTTP2_HEADER_ACCESS_CONTROL_ALLOW_HEADERS] = "*"
 
 	/**
 	 *

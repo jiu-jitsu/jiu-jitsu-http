@@ -3,17 +3,17 @@
  *
  */
 
-const zlib = require(`zlib`)
-const http2 = require(`http2`)
+const zlib = require("zlib")
+const http2 = require("http2")
 
 /**
  *
  */
 
-const ___aes = require(`jiu-jitsu-aes`)
-const ___zip = require(`jiu-jitsu-zip`)
-const ___uuid = require(`jiu-jitsu-uuid`)
-const ___error = require(`jiu-jitsu-error`)
+const ___aes = require("jiu-jitsu-aes")
+const ___zip = require("jiu-jitsu-zip")
+const ___uuid = require("jiu-jitsu-uuid")
+const ___error = require("jiu-jitsu-error")
 
 /**
  *
@@ -56,24 +56,24 @@ HTTP2_OPTIONS.peerMaxConcurrentStreams = 64000
  *
  */
 
-HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_PATH] = `/`
-HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_METHOD] = `POST`
-HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_ACCEPT_ENCODING] = `gzip`
-HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_CONTENT_ENCODING] = `gzip`
-HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_CONTENT_TYPE] = `application/json`
+HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_PATH] = "/"
+HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_METHOD] = "POST"
+HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_ACCEPT_ENCODING] = "gzip"
+HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_CONTENT_ENCODING] = "gzip"
+HTTP2_OUTGOING_HEADERS[HTTP2_HEADER_CONTENT_TYPE] = "application/json"
 
 /**
  *
  */
 
-module.exports = (client, outgoingMessage, resolve, reject) => {
+module.exports = async (client, outgoingMessage, incomingMessage) => {
 
 	/**
 	 *
 	 */
 
-	let session
 	let stream
+	let session
 
 	/**
 	 *
@@ -87,8 +87,8 @@ module.exports = (client, outgoingMessage, resolve, reject) => {
 	 */
 
 	outgoingMessage = JSON.stringify(outgoingMessage)
-	outgoingMessage = options.key && ___zip.encrypt(outgoingMessage, options) || outgoingMessage
-	outgoingMessage = options.key && ___aes.encrypt(outgoingMessage, options) || outgoingMessage
+	outgoingMessage = options.key && await ___zip.encrypt(outgoingMessage, options) || outgoingMessage
+	outgoingMessage = options.key && await ___aes.encrypt(outgoingMessage, options) || outgoingMessage
 	outgoingMessage = zlib.gzipSync(outgoingMessage)
 
 	/**
@@ -132,8 +132,8 @@ module.exports = (client, outgoingMessage, resolve, reject) => {
 		session.count = 1
 		session.setTimeout(HTTP2_SESSION_TIMEOUT)
 		session.setMaxListeners(HTTP2_SESSION_MAX_LISTENERS)
-		session.once(`error`, (error) => ___onSessionError(client, session, error))
-		session.once(`timeout`, (error) => ___onSessionTimeout(client, session, error))
+		session.once("error", (error) => session.destroy(error))
+		session.once("timeout", (error) => session.destroy(error))
 	}
 
 	/**
@@ -152,155 +152,76 @@ module.exports = (client, outgoingMessage, resolve, reject) => {
 	 *
 	 */
 
-	stream.once(`error`, (error) => ___onStreamError(client, session, stream, error, resolve, reject))
-	stream.once(`close`, (error) => ___onStreamClose(client, session, stream, error, resolve, reject))
-	stream.once(`response`, (incomingHeaders) => ___onStreamResponse(client, session, stream, incomingHeaders, resolve, reject))
+	const incomingHeaders = await new Promise((resolve, reject) => {
+		stream.once("error", (error) => reject(error))
+		stream.once("close", (error) => reject(error))
+		stream.once("response", (incomingHeaders) => resolve(incomingHeaders))
+		stream.write(outgoingMessage)
+		stream.end(null)
+	})
 
 	/**
 	 *
 	 */
 
-	stream.write(outgoingMessage)
-	stream.end(null)
-
-}
-
-/**
- *
- */
-
-const ___onSessionError = (client, session, error) => {
-	session.close()
-	session.destroy()
-}
-
-/**
- *
- */
-
-const ___onSessionTimeout = (client, session, error) => {
-	session.close()
-	session.destroy()
-}
-
-/**
- *
- */
-
-const ___onStreamError = (client, session, stream, error, resolve, reject) => {
-	error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_STREAM_ERROR`, error)
-	reject(error)
-}
-
-/**
- *
- */
-
-const ___onStreamClose = (client, session, stream, error, resolve, reject) => {
-	error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_STREAM_CLOSE`, error)
-	reject(error)
-}
-
-/**
- *
- */
-
-const ___onStreamResponse = (client, session, stream, incomingHeaders, resolve, reject) => {
+	incomingHeaders[HTTP2_HEADER_CONTENT_TYPE] = incomingHeaders[HTTP2_HEADER_CONTENT_TYPE] || ""
+	incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING] = incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING] || ""
 
 	/**
 	 *
 	 */
 
-	const status = incomingHeaders[HTTP2_HEADER_STATUS]
-	const incomingMessage = []
+	const incomingStatus = incomingHeaders[HTTP2_HEADER_STATUS]
 
 	/**
 	 *
 	 */
 
-	if (status > 200) {
-		stream.end()
-		const error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_RESPONSE_HEADER_STATUS`, status)
-		return reject(error)
+	if (incomingStatus > 200) {
+		throw ___error("jiu-jitsu-http", "FAIL", "HTTP_RESPONSE_HEADER_STATUS", incomingStatus)
 	}
 
 	/**
 	 *
 	 */
 
-	stream.on(`data`, (data) => ___onStreamData(client, session, stream, incomingHeaders, incomingMessage, data, resolve, reject))
-	stream.on(`end`, (error) => ___onStreamEnd(client, session, stream, incomingHeaders, incomingMessage, error, resolve, reject))
-
-}
-
-/**
- *
- */
-
-const ___onStreamData = (client, session, stream, incomingHeaders, incomingMessage, data, resolve, reject) => {
-	incomingMessage.push(data)
-}
-
-/**
- *
- */
-
-const ___onStreamEnd = (client, session, stream, incomingHeaders, incomingMessage, error, resolve, reject) => {
+	const buffers = []
 
 	/**
 	 *
 	 */
 
-	const options = client.___options
-
-	/**
-	 *
-	 */
-
-	try {
-
-		/**
-		 *
-		 */
-
-		incomingMessage = Buffer.concat(incomingMessage)
-
-		/**
-		 *
-		 */
-
-		if (incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING].indexOf(`gzip`) > -1) {
-			incomingMessage = zlib.unzipSync(incomingMessage)
-		}
-
-		/**
-		 *
-		 */
-
-		incomingMessage = incomingMessage.toString()
-		incomingMessage = options.key && ___aes.decrypt(incomingMessage, options) || incomingMessage
-		incomingMessage = options.key && ___zip.decrypt(incomingMessage, options) || incomingMessage
-		incomingMessage = JSON.parse(incomingMessage)
-
-		/**
-		 *
-		 */
-
-	} catch (error) {
-
-		/**
-		 *
-		 */
-
-		error = ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_POST_ERROR`, error)
-		return reject(error)
-
+	for await (const buffer of stream) {
+		buffers.push(buffer)
 	}
 
 	/**
 	 *
 	 */
 
-	return resolve(incomingMessage)
+	incomingMessage = Buffer.concat(buffers)
+
+	/**
+	 *
+	 */
+
+	if (incomingHeaders[HTTP2_HEADER_CONTENT_ENCODING].indexOf("gzip") > -1) {
+		incomingMessage = zlib.unzipSync(incomingMessage)
+	}
+
+	/**
+	 *
+	 */
+
+	incomingMessage = incomingMessage.toString()
+	incomingMessage = options.key && await ___aes.decrypt(incomingMessage, options) || incomingMessage
+	incomingMessage = options.key && await ___zip.decrypt(incomingMessage, options) || incomingMessage
+	incomingMessage = JSON.parse(incomingMessage)
+
+	/**
+	 *
+	 */
+
+	return incomingMessage
 
 }

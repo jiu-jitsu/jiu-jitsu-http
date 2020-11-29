@@ -3,10 +3,9 @@
  *
  */
 
-const fs = require(`fs`)
-const util = require(`util`)
-const zlib = require(`zlib`)
-const http2 = require(`http2`)
+const fs = require("fs")
+const zlib = require("zlib")
+const http2 = require("http2")
 
 /**
  *
@@ -40,7 +39,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 *
 	 */
 
-	if (incomingHeaders[HTTP2_HEADER_PATH] === `/favicon.ico`) {
+	if (incomingHeaders[HTTP2_HEADER_PATH] === "/favicon.ico") {
 		return stream.destroy()
 	}
 
@@ -49,14 +48,14 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	const handlers = server.___get
-	const handler = handlers[`*`]
+	const handler = handlers["*"]
 
 	/**
 	 *
 	 */
 
 	if (!handler) {
-		throw ___error(`jiu-jitsu-http`, `FAIL`, `HTTP_HANDLER_NOT_FOUND`)
+		throw ___error("jiu-jitsu-http", "FAIL", "HTTP_HANDLER_NOT_FOUND")
 	}
 
 	/**
@@ -96,11 +95,11 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 		 */
 
 		file.type =
-			file.source.lastIndexOf(`.html`) > -1 && `text/html` ||
-			file.source.lastIndexOf(`.js`) > -1 && `text/javascript` ||
-			file.source.lastIndexOf(`.jpg`) > -1 && `image/jpeg` ||
-			file.source.lastIndexOf(`.ico`) > -1 && `image/x-icon` ||
-			file.source.lastIndexOf(`.woff2`) > -1 && `font/woff2`
+			file.source.lastIndexOf(".html") > -1 && "text/html" ||
+			file.source.lastIndexOf(".js") > -1 && "text/javascript" ||
+			file.source.lastIndexOf(".jpg") > -1 && "image/jpeg" ||
+			file.source.lastIndexOf(".ico") > -1 && "image/x-icon" ||
+			file.source.lastIndexOf(".woff2") > -1 && "font/woff2"
 
 		/**
 		 *
@@ -139,10 +138,10 @@ const sendFile = (server, socket, stream, incomingHeaders, outgoingHeaders = {},
 
 	if (!file.push) {
 		outgoingHeaders[HTTP2_HEADER_STATUS] = 200
-		outgoingHeaders[HTTP2_HEADER_CACHE_CONTROL] = `no-store`
+		outgoingHeaders[HTTP2_HEADER_CACHE_CONTROL] = "no-store"
 		outgoingHeaders[HTTP2_HEADER_CONTENT_TYPE] = file.type
 	} else {
-		outgoingHeaders[HTTP2_HEADER_CACHE_CONTROL] = `no-store`
+		outgoingHeaders[HTTP2_HEADER_CACHE_CONTROL] = "no-store"
 		outgoingHeaders[HTTP2_HEADER_CONTENT_TYPE] = file.type
 	}
 
@@ -151,22 +150,22 @@ const sendFile = (server, socket, stream, incomingHeaders, outgoingHeaders = {},
 	 */
 
 	if (file.zip) {
-		outgoingHeaders[HTTP2_HEADER_CONTENT_ENCODING] = `gzip`
+		outgoingHeaders[HTTP2_HEADER_CONTENT_ENCODING] = "gzip"
 	}
 
 	/**
 	 *
 	 */
 
-	stream.on(`error`, (error) => error)
+	stream.on("error", (error) => error)
 	stream.respond(outgoingHeaders)
 
 	/**
 	 *
 	 */
 
-	fileGzipStream.on(`error`, (error) => error)
-	fileReadStream.on(`error`, (error) => error)
+	fileGzipStream.on("error", (error) => error)
+	fileReadStream.on("error", (error) => error)
 
 	/**
 	 *
