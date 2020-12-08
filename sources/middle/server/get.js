@@ -11,6 +11,12 @@ const http2 = require("http2")
  *
  */
 
+const ERROR = require("jiu-jitsu-error")
+
+/**
+ *
+ */
+
 const HTTP2_HEADER_PATH = http2.constants.HTTP2_HEADER_PATH
 const HTTP2_HEADER_STATUS = http2.constants.HTTP2_HEADER_STATUS
 const HTTP2_HEADER_CONTENT_TYPE = http2.constants.HTTP2_HEADER_CONTENT_TYPE
@@ -33,7 +39,7 @@ module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders
  *
  */
 
-const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) => {
+async function make (server, socket, stream, incomingHeaders, outgoingHeaders) {
 
 	/**
 	 *
@@ -55,7 +61,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	if (!handler) {
-		throw ___error("jiu-jitsu-http", "FAIL", "HTTP_HANDLER_NOT_FOUND")
+		throw new ERROR("jiu-jitsu-http|HTTP_HANDLER_NOT_FOUND")
 	}
 
 	/**
@@ -123,7 +129,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
  *
  */
 
-const sendFile = (server, socket, stream, incomingHeaders, outgoingHeaders = {}, file) => {
+function sendFile (server, socket, stream, incomingHeaders, outgoingHeaders = {}, file) {
 
 	/**
 	 *

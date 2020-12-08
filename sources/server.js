@@ -12,8 +12,8 @@ const querystring = require("querystring")
  *
  */
 
-const ___log = require("jiu-jitsu-log")
-const ___uuid = require("jiu-jitsu-uuid")
+const LOG = require("jiu-jitsu-log")
+const UUID = require("jiu-jitsu-uuid")
 
 /**
  *
@@ -61,8 +61,8 @@ class Server {
 		this.___post = {}
 		this.___options = options
 		this.___settings = {}
-		this.___settings.key = fs.readFileSync(`${options.dir}/${options.ssl}.key`).toString()
-		this.___settings.cert = fs.readFileSync(`${options.dir}/${options.ssl}.cert`).toString()
+		this.___settings.key = fs.readFileSync(`${options.ssl}.key`).toString()
+		this.___settings.cert = fs.readFileSync(`${options.ssl}.cert`).toString()
 		this.___settings.paddingStrategy = HTTP2_PADDING_STRATEGY_MAX
 		this.___settings.peerMaxConcurrentStreams = HTTP2_PEER_MAX_CONCURRENT_STREAMS
 	}
@@ -119,7 +119,7 @@ class Server {
 	 */
 
 	async ___onError (error) {
-		await ___log("jiu-jitsu-http", "FAIL", "!", error, true)
+		new LOG("jiu-jitsu-http|ERROR", "ERROR", ["!", error], true)
 		process.exit(1)
 	}
 
@@ -128,7 +128,7 @@ class Server {
 	 */
 
 	async ___onListening (error, resolve) {
-		await ___log("jiu-jitsu-http", "OK", "✔")
+		new LOG("jiu-jitsu-http|LISTENING", "OK", ["✔"], true)
 		resolve(error)
 	}
 
@@ -147,7 +147,7 @@ class Server {
 	 */
 
 	async ___onSessionError (session, error) {
-		await ___log("jiu-jitsu-http", "FAIL", "HTTP_SESSION_ERROR", error, true)
+		new LOG("jiu-jitsu-http|HTTP_SESSION_ERROR", "ERROR", ["!", error] , true)
 		session.close()
 		session.destroy()
 	}
@@ -157,7 +157,7 @@ class Server {
 	 */
 
 	async ___onSessionTimeout (session, error) {
-		await ___log("jiu-jitsu-http", "FAIL", "HTTP_SESSION_TIMEOUT", error, true)
+		new LOG("jiu-jitsu-http|HTTP_SESSION_TIMEOUT", "ERROR", ["!", error] , true)
 		session.close()
 		session.destroy()
 	}
@@ -178,7 +178,7 @@ class Server {
 		 *
 		 */
 
-		socket.id = ___uuid()
+		socket.id = UUID()
 		socket.ip = this.___ip(stream, headers)
 		socket.url = this.___url(stream, headers)
 		socket.request = null

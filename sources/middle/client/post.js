@@ -11,10 +11,10 @@ const http2 = require("http2")
  *
  */
 
-const ___aes = require("jiu-jitsu-aes")
-const ___zip = require("jiu-jitsu-zip")
-const ___uuid = require("jiu-jitsu-uuid")
-const ___error = require("jiu-jitsu-error")
+const AES = require("jiu-jitsu-aes")
+const ZIP = require("jiu-jitsu-zip")
+const UUID = require("jiu-jitsu-uuid")
+const ERROR = require("jiu-jitsu-error")
 
 /**
  *
@@ -82,14 +82,15 @@ module.exports = async (client, outgoingMessage, incomingMessage) => {
 
 	const options = client.___options
 	const authority = client.___authority
+	const key = options.key
 
 	/**
 	 *
 	 */
 
 	outgoingMessage = JSON.stringify(outgoingMessage)
-	outgoingMessage = options.key && await ___zip.encrypt(outgoingMessage, options) || outgoingMessage
-	outgoingMessage = options.key && await ___aes.encrypt(outgoingMessage, options) || outgoingMessage
+	outgoingMessage = key && await ZIP.encrypt(outgoingMessage, key) || outgoingMessage
+	outgoingMessage = key && await AES.encrypt(outgoingMessage, key) || outgoingMessage
 	outgoingMessage = await util.promisify(zlib.gzip)(outgoingMessage)
 
 	/**
@@ -129,7 +130,7 @@ module.exports = async (client, outgoingMessage, incomingMessage) => {
 
 	if (!session) {
 		session = http2.connect(authority, HTTP2_OPTIONS)
-		session.id = ___uuid()
+		session.id = UUID()
 		session.count = 1
 		session.setTimeout(HTTP2_SESSION_TIMEOUT)
 		session.setMaxListeners(HTTP2_SESSION_MAX_LISTENERS)
@@ -179,7 +180,7 @@ module.exports = async (client, outgoingMessage, incomingMessage) => {
 	 */
 
 	if (incomingStatus > 200) {
-		throw ___error("jiu-jitsu-http", "FAIL", "HTTP_RESPONSE_HEADER_STATUS", incomingStatus)
+		throw new ERROR("jiu-jitsu-http|HTTP_RESPONSE_HEADER_STATUS", "ERROR")
 	}
 
 	/**
@@ -215,8 +216,8 @@ module.exports = async (client, outgoingMessage, incomingMessage) => {
 	 */
 
 	incomingMessage = incomingMessage.toString()
-	incomingMessage = options.key && await ___aes.decrypt(incomingMessage, options) || incomingMessage
-	incomingMessage = options.key && await ___zip.decrypt(incomingMessage, options) || incomingMessage
+	incomingMessage = key && await AES.decrypt(incomingMessage, key) || incomingMessage
+	incomingMessage = key && await ZIP.decrypt(incomingMessage, key) || incomingMessage
 	incomingMessage = JSON.parse(incomingMessage)
 
 	/**

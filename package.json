@@ -1,6 +1,6 @@
 {
 	"name": "jiu-jitsu-http",
-	"version": "0.0.1",
+	"version": "0.0.5",
 	"author": "Vitaly Anagorsky <vitaly@anagorsky.com>",
 	"dependencies": {
 		"jiu-jitsu-log": "git+https://github.com/jiu-jitsu/jiu-jitsu-log.git",

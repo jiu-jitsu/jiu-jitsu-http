@@ -11,9 +11,9 @@ const http2 = require("http2")
  *
  */
 
-const ___aes = require("jiu-jitsu-aes")
-const ___zip = require("jiu-jitsu-zip")
-const ___error = require("jiu-jitsu-error")
+const AES = require("jiu-jitsu-aes")
+const ZIP = require("jiu-jitsu-zip")
+const ERROR = require("jiu-jitsu-error")
 
 /**
  *
@@ -41,7 +41,7 @@ module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders
  *
  */
 
-const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) => {
+async function make (server, socket, stream, incomingHeaders, outgoingHeaders) {
 
 	/**
 	 *
@@ -57,6 +57,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	const buffers = []
 	const options = server.___options
 	const handlers = server.___post
+	const key = options.key
 
 	/**
 	 *
@@ -92,8 +93,8 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	incomingMessage = incomingMessage.toString()
-	incomingMessage = options.key && await ___aes.decrypt(incomingMessage, options) || incomingMessage
-	incomingMessage = options.key && await ___zip.decrypt(incomingMessage, options) || incomingMessage
+	incomingMessage = key && await AES.decrypt(incomingMessage, key) || incomingMessage
+	incomingMessage = key && await ZIP.decrypt(incomingMessage, key) || incomingMessage
 	incomingMessage = JSON.parse(incomingMessage)
 
 	/**
@@ -107,7 +108,7 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	if (!handler) {
-		throw ___error("jiu-jitsu-http", "FAIL", "HTTP_HANDLER_NOT_FOUND")
+		throw new ERROR("jiu-jitsu-http|HTTP_HANDLER_NOT_FOUND", "ERROR")
 	}
 
 	/**
@@ -141,8 +142,8 @@ const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) =>
 	 */
 
 	outgoingMessage = JSON.stringify(outgoingMessage)
-	outgoingMessage = options.key && await ___zip.encrypt(outgoingMessage, options) || outgoingMessage
-	outgoingMessage = options.key && await ___aes.encrypt(outgoingMessage, options) || outgoingMessage
+	outgoingMessage = key && await ZIP.encrypt(outgoingMessage, key) || outgoingMessage
+	outgoingMessage = key && await AES.encrypt(outgoingMessage, key) || outgoingMessage
 	outgoingMessage = await util.promisify(zlib.gzip)(outgoingMessage)
 
 	/**

@@ -29,7 +29,7 @@ module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders
  *
  */
 
-const make = async (server, socket, stream, incomingHeaders, outgoingHeaders) => {
+async function make (server, socket, stream, incomingHeaders, outgoingHeaders) {
 
 	/**
 	 *
