@@ -3,10 +3,10 @@
 	"version": "0.0.5",
 	"author": "Vitaly Anagorsky <vitaly@anagorsky.com>",
 	"dependencies": {
-		"jiu-jitsu-log": "git+https://github.com/jiu-jitsu/jiu-jitsu-log.git",
 		"jiu-jitsu-aes": "git+https://github.com/jiu-jitsu/jiu-jitsu-aes.git",
-		"jiu-jitsu-zip": "git+https://github.com/jiu-jitsu/jiu-jitsu-zip.git",
+		"jiu-jitsu-error": "git+https://github.com/jiu-jitsu/jiu-jitsu-error.git",
+		"jiu-jitsu-log": "git+https://github.com/jiu-jitsu/jiu-jitsu-log.git",
 		"jiu-jitsu-uuid": "git+https://github.com/jiu-jitsu/jiu-jitsu-uuid.git",
-		"jiu-jitsu-error": "git+https://github.com/jiu-jitsu/jiu-jitsu-error.git"
+		"jiu-jitsu-zip": "git+https://github.com/jiu-jitsu/jiu-jitsu-zip.git"
 	}
 }

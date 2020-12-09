@@ -108,7 +108,7 @@ async function make (server, socket, stream, incomingHeaders, outgoingHeaders) {
 	 */
 
 	if (!handler) {
-		throw new ERROR("jiu-jitsu-http|HTTP_HANDLER_NOT_FOUND", "ERROR")
+		throw new ERROR("jiu-jitsu-http|HTTP_HANDLER_NOT_FOUND")
 	}
 
 	/**

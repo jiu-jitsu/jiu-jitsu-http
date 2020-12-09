@@ -180,7 +180,7 @@ module.exports = async (client, outgoingMessage, incomingMessage) => {
 	 */
 
 	if (incomingStatus > 200) {
-		throw new ERROR("jiu-jitsu-http|HTTP_RESPONSE_HEADER_STATUS", "ERROR")
+		throw new ERROR("jiu-jitsu-http|HTTP_RESPONSE_HEADER_STATUS")
 	}
 
 	/**
