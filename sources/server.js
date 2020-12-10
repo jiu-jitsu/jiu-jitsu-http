@@ -77,7 +77,7 @@ class Server {
 	 *
 	 */
 
-	get (key, next) {
+	async get (key, next) {
 		this.___get[key] = next
 	}
 
@@ -85,7 +85,7 @@ class Server {
 	 *
 	 */
 
-	file (key, next) {
+	async file (key, next) {
 		this.___put[key] = next
 	}
 
@@ -93,7 +93,7 @@ class Server {
 	 *
 	 */
 
-	message (key, next) {
+	async message (key, next) {
 		this.___post[key] = next
 	}
 
