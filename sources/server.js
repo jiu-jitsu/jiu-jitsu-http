@@ -125,7 +125,7 @@ class Server {
 	 */
 
 	async ___onError (error) {
-		new LOG("jiu-jitsu-http|ERROR", "ERROR", ["!", error], true)
+		new LOG("jiu-jitsu-http|SERVER", "ERROR", ["!", error], true)
 		process.exit(1)
 	}
 
@@ -134,7 +134,7 @@ class Server {
 	 */
 
 	async ___onListening (error, resolve) {
-		new LOG("jiu-jitsu-http|LISTENING", "OK", ["✔"], true)
+		new LOG("jiu-jitsu-http|SERVER", "OK", ["✔"], true)
 		resolve(error)
 	}
 
