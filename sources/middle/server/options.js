@@ -21,7 +21,7 @@ module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders
 	try {
 		await make(server, socket, stream, incomingHeaders, outgoingHeaders)
 	} catch (error) {
-		stream.destroy()
+		stream.destroy(error)
 	}
 }
 

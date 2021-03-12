@@ -67,8 +67,8 @@ class Server {
 		this.___post = {}
 		this.___options = options
 		this.___settings = {}
-		this.___settings.key = fs.readFileSync(`${CWD}/${options.ssl}/ssl.key`).toString()
-		this.___settings.cert = fs.readFileSync(`${CWD}/${options.ssl}/ssl.cert`).toString()
+		this.___settings.key = fs.readFileSync(`${CWD}/${options["ssl"]}/ssl.key`).toString()
+		this.___settings.cert = fs.readFileSync(`${CWD}/${options["ssl"]}/ssl.cert`).toString()
 		this.___settings.paddingStrategy = HTTP2_PADDING_STRATEGY_MAX
 		this.___settings.peerMaxConcurrentStreams = HTTP2_PEER_MAX_CONCURRENT_STREAMS
 	}

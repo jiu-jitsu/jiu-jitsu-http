@@ -4,5 +4,5 @@
  */
 
 module.exports = async (server, socket, stream, incomingHeaders, outgoingHeaders = {}) => {
-	stream.destroy()
+	stream.destroy(error)
 }
